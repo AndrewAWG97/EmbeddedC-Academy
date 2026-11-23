@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmbeddedC Academy — Master Embedded Systems Programming</title>
+
+    <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Favicon: inline SVG circuit/chip icon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='16' y='16' width='32' height='32' rx='4' fill='%23FF6B35' stroke='%23222' stroke-width='2'/%3E%3Crect x='22' y='22' width='20' height='20' rx='2' fill='%23222'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-size='12' font-family='monospace' fill='%2300F5D4'%3EC%3C/text%3E%3Cline x1='20' y1='8' x2='20' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='28' y1='8' x2='28' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='36' y1='8' x2='36' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='44' y1='8' x2='44' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='20' y1='48' x2='20' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='28' y1='48' x2='28' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='36' y1='48' x2='36' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='44' y1='48' x2='44' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='20' x2='16' y2='20' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='28' x2='16' y2='28' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='36' x2='16' y2='36' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='44' x2='16' y2='44' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='20' x2='56' y2='20' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='28' x2='56' y2='28' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='36' x2='56' y2='36' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='44' x2='56' y2='44' stroke='%23222' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+<body data-theme="light">
+
+    <!-- =====================================================
+         1. SIDEBAR NAVIGATION
+         ===================================================== -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">⚡</div>
+            <h1>Embedded<span class="accent">C</span></h1>
+        </div>
+        <div class="sidebar-nav">
+            <a class="nav-link active" href="#hero" data-section="hero"><span class="nav-icon">🏠</span><span class="nav-text">Home</span></a>
+            <a class="nav-link" href="#roadmap" data-section="roadmap"><span class="nav-icon">🗺️</span><span class="nav-text">Roadmap</span></a>
+            <a class="nav-link" href="#memory" data-section="memory"><span class="nav-icon">🧠</span><span class="nav-text">Memory</span></a>
+            <a class="nav-link" href="#datatypes" data-section="datatypes"><span class="nav-icon">📊</span><span class="nav-text">Data Types</span></a>
+            <a class="nav-link" href="#bitwise" data-section="bitwise"><span class="nav-icon">⚡</span><span class="nav-text">Bitwise Ops</span></a>
+            <a class="nav-link" href="#pointers" data-section="pointers"><span class="nav-icon">🔗</span><span class="nav-text">Pointers</span></a>
+            <a class="nav-link" href="#registers" data-section="registers"><span class="nav-icon">🎛️</span><span class="nav-text">Registers</span></a>
+            <a class="nav-link" href="#interrupts" data-section="interrupts"><span class="nav-icon">⚠️</span><span class="nav-text">Interrupts</span></a>
+            <a class="nav-link" href="#protocols" data-section="protocols"><span class="nav-icon">📡</span><span class="nav-text">Protocols</span></a>
+            <a class="nav-link" href="#timers" data-section="timers"><span class="nav-icon">⏱️</span><span class="nav-text">Timers</span></a>
+            <a class="nav-link" href="#rtos" data-section="rtos"><span class="nav-icon">🔄</span><span class="nav-text">RTOS</span></a>
+            <a class="nav-link" href="#linux-preview" data-section="linux-preview"><span class="nav-icon">🐧</span><span class="nav-text">Linux</span></a>
+        </div>
+        <div class="sidebar-footer">
+            <button class="theme-toggle" id="theme-toggle">
+                <span class="theme-icon">🌙</span>
+                <span class="theme-text">Dark Mode</span>
+            </button>
+            <div class="progress-container">
+                <div class="progress-label">Progress</div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                <div class="progress-text" id="progress-text">0 / 12</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =====================================================
+         2. OVERLAY (for mobile sidebar)
+         ===================================================== -->
+    <div class="overlay" id="sidebar-overlay"></div>
+
+    <!-- =====================================================
+         3. MOBILE HEADER
+         ===================================================== -->
+    <div class="mobile-header">
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <span class="mobile-logo">⚡ Embedded<span class="accent">C</span></span>
+    </div>
+
+    <!-- =====================================================
+         4. MAIN CONTENT
+         ===================================================== -->
+    <main class="main-content">
+
+        <!-- =================================================
+             HERO SECTION
+             ================================================= -->
+        <section id="hero" class="content-section active">
+            <div class="hero-container">
+                <div class="hero-text">
+                    <h1 class="hero-title">Master <span class="highlight">Embedded C</span></h1>
+                    <p class="hero-subtitle">From bare-metal fundamentals to RTOS — learn embedded systems programming through interactive visualizations and hands-on examples. Build real-world skills for STM32, ARM Cortex-M, and beyond.</p>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="stat-value">10</span>
+                            <span class="stat-label">Modules</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="stat-value">35+</span>
+                            <span class="stat-label">Code Samples</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="stat-value">🧪</span>
+                            <span class="stat-label">Interactive Labs</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="stat-value">🆓</span>
+                            <span class="stat-label">Free &amp; Open</span>
+                        </div>
+                    </div>
+                    <div class="hero-buttons">
+                        <button class="btn btn--primary" data-section="memory">Start Learning →</button>
+                        <button class="btn btn--secondary" data-section="roadmap">View Roadmap</button>
+                    </div>
+                </div>
+                <div class="hero-code-card">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="code-filename">main.c</span>
+                        </div>
+                        <pre><code>#include "stm32f4xx.h"
+
+int main(void) {
+    // Enable GPIOA clock
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+    (void)RCC->AHB1ENR;          // wait for clock to start
+
+    // PA5 = output (MODER5 = 0b01)
+    GPIOA->MODER &amp;= ~(3U &lt;&lt; 10);
+    GPIOA->MODER |=  (1U &lt;&lt; 10);
+
+    while (1) {
+        GPIOA->ODR ^= (1U &lt;&lt; 5);  // Toggle LED
+        for (volatile uint32_t i = 0; i &lt; 100000; i++);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================
+             ROADMAP SECTION (00)
+             ================================================= -->
+        <section id="roadmap" class="content-section">
+            <div class="section-header">
+                <span class="section-number">00</span>
+                <h2 class="section-title">Learning Roadmap</h2>
+                <p class="section-subtitle">Your path from beginner to embedded systems expert</p>
+            </div>
+            <div class="roadmap-container">
+                <!-- Phase 1 -->
+                <div class="roadmap-phase">
+                    <div class="phase-icon">🏗️</div>
+                    <div class="phase-content">
+                        <span class="tag tag--beginner">Beginner</span>
+                        <h3>Phase 1: Foundations</h3>
+                        <p>Memory Layout, Data Types</p>
+                        <p class="phase-desc">Understand how embedded systems organize memory, fixed-width types, and the difference between stack and heap in constrained environments.</p>
+                    </div>
+                </div>
+                <div class="roadmap-connector"></div>
+
+                <!-- Phase 2 -->
+                <div class="roadmap-phase">
+                    <div class="phase-icon">🔧</div>
+                    <div class="phase-content">
+                        <span class="tag tag--beginner">Beginner</span>
+                        <h3>Phase 2: Core Skills</h3>
+                        <p>Bitwise Operations, Pointers</p>
+                        <p class="phase-desc">Master bit manipulation and pointer arithmetic — the two most critical skills in every embedded C developer's toolkit.</p>
+                    </div>
+                </div>
+                <div class="roadmap-connector"></div>
+
+                <!-- Phase 3 -->
+                <div class="roadmap-phase">
+                    <div class="phase-icon">🔌</div>
+                    <div class="phase-content">
+                        <span class="tag tag--intermediate">Intermediate</span>
+                        <h3>Phase 3: Hardware</h3>
+                        <p>Registers, GPIO, Interrupts</p>
+                        <p class="phase-desc">Learn to control real hardware through register manipulation, configure GPIO pins, and respond to hardware events with interrupt service routines.</p>
+                    </div>
+                </div>
+                <div class="roadmap-connector"></div>
+
+                <!-- Phase 4 -->
+                <div class="roadmap-phase">
+                    <div class="phase-icon">📡</div>
+                    <div class="phase-content">
+                        <span class="tag tag--intermediate">Intermediate</span>
+                        <h3>Phase 4: Communication</h3>
+                        <p>UART, SPI, I2C</p>
+                        <p class="phase-desc">Connect your microcontroller to sensors, displays, and other chips using the essential serial communication protocols.</p>
+                    </div>
+                </div>
+                <div class="roadmap-connector"></div>
+
+                <!-- Phase 5 -->
+                <div class="roadmap-phase">
+                    <div class="phase-icon">⚙️</div>
+                    <div class="phase-content">
+                        <span class="tag tag--advanced">Advanced</span>
+                        <h3>Phase 5: Advanced</h3>
+                        <p>Timers, PWM, RTOS</p>
+                        <p class="phase-desc">Generate precise timing, PWM waveforms, and graduate to real-time operating systems for complex multi-task applications.</p>
+                    </div>
+                </div>
+                <div class="roadmap-connector"></div>
+
+                <!-- Phase 6 -->
+                <div class="roadmap-phase coming-soon">
+                    <div class="phase-icon">🐧</div>
+                    <div class="phase-content">
+                        <span class="tag tag--advanced">Advanced</span>
+                        <h3>Phase 6: Next Level</h3>
+                        <p>Embedded Linux</p>
+                        <p class="phase-desc">Step into the world of embedded Linux — kernel drivers, device trees, Yocto, Buildroot, and application-class embedded systems.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================
+             MEMORY SECTION (01)
+             ================================================= -->
+        <section id="memory" class="content-section">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h2 class="section-title">Memory Architecture</h2>
+                <p class="section-subtitle">Understanding how embedded systems organize memory</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Memory Map (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🗺️</span>
+                        <h3>Memory Map</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="memory-map">
+                            <div class="mem-segment stack">Stack ↓<span class="mem-addr">0x20020000</span></div>
+                            <div class="mem-segment free">↕ Free Memory</div>
+                            <div class="mem-segment heap">Heap ↑<span class="mem-addr">0x20000400</span></div>
+                            <div class="mem-segment bss">BSS (Uninitialized)<span class="mem-addr">0x20000200</span></div>
+                            <div class="mem-segment data">Data (Initialized)<span class="mem-addr">0x20000100</span></div>
+                            <div class="mem-segment text">Text (Code)<span class="mem-addr">0x08000000</span></div>
+                        </div>
+                        <p><strong>Stack</strong> grows downward from the top of SRAM (0x20020000 on a 128 KB STM32F407 — the initial SP is the first word of the vector table) and stores local variables and function call frames. <strong>Heap</strong> grows upward and is used for dynamic allocation. <strong>BSS</strong> holds zero-initialized global variables, while <strong>Data</strong> stores initialized globals. <strong>Text</strong> is your compiled code stored in Flash.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Stack -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📚</span>
+                        <h3>Stack</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>The stack is a LIFO (Last-In, First-Out) data structure used for local variables, function call frames, and return addresses. It grows <strong>downward</strong> from the top of RAM. Stack memory is automatically allocated on function entry and freed on return.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">stack_example.c</span>
+                            </div>
+                            <pre><code>void process_data(void) {
+    uint8_t buffer[64];    // Stack
+    uint32_t counter = 0;  // Stack
+    // Auto-freed on return
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Heap -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🏔️</span>
+                        <h3>Heap</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>The heap is used for dynamic memory allocation at runtime. In embedded systems, heap usage is <strong>discouraged</strong> because it introduces fragmentation risks, non-deterministic timing, and potential memory leaks — all dangerous in safety-critical systems.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">heap_example.c</span>
+                            </div>
+                            <pre><code>// ⚠️ Use carefully in embedded!
+uint8_t *buf = (uint8_t*)malloc(256);
+if (buf != NULL) {
+    memset(buf, 0, 256);
+    // ... use buffer ...
+    free(buf);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Interactive Memory Visualizer (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span>
+                        <h3>Interactive Memory Visualizer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Experiment with stack and heap allocation. Stack variables appear when a function runs and disappear when it <em>returns</em>; heap blocks stay until you call <code>free()</code>. If the two regions meet, you have a stack overflow — one of the most common embedded crashes.</p>
+                        <div class="viz-container">
+                            <canvas id="memory-viz-canvas" width="560" height="380"></canvas>
+                            <div class="viz-controls">
+                                <button class="btn btn--primary btn--small" id="mem-alloc-stack">Allocate Stack</button>
+                                <button class="btn btn--accent btn--small" id="mem-alloc-heap">Allocate Heap</button>
+                                <button class="btn btn--secondary btn--small" id="mem-free">free() Last Heap</button>
+                                <button class="btn btn--secondary btn--small" id="mem-return">Return (pop stack)</button>
+                                <button class="btn btn--secondary btn--small" id="mem-reset">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Volatile -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔥</span>
+                        <h3>Volatile</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>The <code>volatile</code> keyword tells the compiler that a variable's value can change at any time — by hardware, an interrupt, or another thread. Without it, the compiler may optimize away reads, causing your code to miss hardware changes.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">volatile_example.c</span>
+                            </div>
+                            <pre><code>// Without volatile: compiler may read once
+// and spin forever on a cached value.
+// With volatile: re-read on every access.
+#define USART1_SR (*(volatile uint32_t *)0x40011000)
+#define SR_TXE    (1U &lt;&lt; 7)   // TX data register empty
+
+while (!(USART1_SR &amp; SR_TXE)) {
+    // Wait until hardware sets the ready bit
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Static & Const -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📌</span>
+                        <h3>Static &amp; Const</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p><code>static</code> variables inside functions persist across calls — they live in the .data or .bss segment, not on the stack. <code>const</code> data is typically stored in Flash (.rodata), saving precious RAM on memory-constrained MCUs.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">static_const.c</span>
+                            </div>
+                            <pre><code>void count_calls(void) {
+    static uint32_t count = 0;  // .bss (zero-init)
+    static uint32_t boots = 1;  // .data (non-zero init)
+    count++;
+}
+
+const uint8_t lookup[] = {0,1,1,2,3,5,8};
+// Stored in Flash (.rodata)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             DATA TYPES SECTION (02)
+             ================================================= -->
+        <section id="datatypes" class="content-section">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h2 class="section-title">Data Types &amp; Representation</h2>
+                <p class="section-subtitle">Fixed-width types, endianness, and memory representation</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Fixed-Width Types (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">📏</span>
+                        <h3>Fixed-Width Types</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Always use <code>#include &lt;stdint.h&gt;</code> for portable, fixed-width integer types. Never use <code>int</code> or <code>long</code> in embedded code — their sizes vary between platforms!</p>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>uint8_t</code></td>
+                                    <td>1 byte</td>
+                                    <td>0</td>
+                                    <td>255</td>
+                                </tr>
+                                <tr>
+                                    <td><code>int8_t</code></td>
+                                    <td>1 byte</td>
+                                    <td>-128</td>
+                                    <td>127</td>
+                                </tr>
+                                <tr>
+                                    <td><code>uint16_t</code></td>
+                                    <td>2 bytes</td>
+                                    <td>0</td>
+                                    <td>65,535</td>
+                                </tr>
+                                <tr>
+                                    <td><code>int16_t</code></td>
+                                    <td>2 bytes</td>
+                                    <td>-32,768</td>
+                                    <td>32,767</td>
+                                </tr>
+                                <tr>
+                                    <td><code>uint32_t</code></td>
+                                    <td>4 bytes</td>
+                                    <td>0</td>
+                                    <td>4,294,967,295</td>
+                                </tr>
+                                <tr>
+                                    <td><code>int32_t</code></td>
+                                    <td>4 bytes</td>
+                                    <td>-2,147,483,648</td>
+                                    <td>2,147,483,647</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Card 2: sizeof() Explorer -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔍</span>
+                        <h3>sizeof() Explorer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Click a type to visualize how many bytes it occupies in memory on a 32-bit ARM microcontroller.</p>
+                        <div class="sizeof-explorer" id="sizeof-explorer">
+                            <div class="sizeof-buttons">
+                                <button class="btn btn--small" data-type="uint8_t" data-size="1">uint8_t</button>
+                                <button class="btn btn--small" data-type="uint16_t" data-size="2">uint16_t</button>
+                                <button class="btn btn--small" data-type="uint32_t" data-size="4">uint32_t</button>
+                                <button class="btn btn--small" data-type="float" data-size="4">float</button>
+                                <button class="btn btn--small" data-type="double" data-size="8">double</button>
+                                <button class="btn btn--small" data-type="pointer" data-size="4">void*</button>
+                            </div>
+                            <div class="sizeof-display" id="sizeof-display">
+                                <span class="sizeof-label">Select a type</span>
+                                <div class="byte-blocks" id="byte-blocks"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Type Casting -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔀</span>
+                        <h3>Type Casting</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Casting between types is essential in embedded C, but conversions that don't fit the target type silently change the value. Always be explicit about casts and understand the data ranges.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">casting.c</span>
+                            </div>
+                            <pre><code>uint8_t sensor_val = 200;
+int8_t signed_val = (int8_t)sensor_val;
+// signed_val = -56 on GCC/ARM: 200 doesn't fit
+// in int8_t (max 127), result is impl.-defined
+
+uint16_t adc_raw = 3000;
+float voltage = (float)adc_raw / 4095.0f * 3.3f;</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Endianness (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🔄</span>
+                        <h3>Endianness</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Endianness determines the byte order when storing multi-byte values. ARM Cortex-M is <strong>little-endian</strong> by default, but network protocols use big-endian. You must handle conversion when communicating between systems.</p>
+                        <div class="endian-visual">
+                            <div class="endian-row">
+                                <h4>Big-Endian (Network Order)</h4>
+                                <div class="endian-bytes">
+                                    <span class="byte" style="background:#FF6B35">0xDE</span>
+                                    <span class="byte" style="background:#00F5D4">0xAD</span>
+                                    <span class="byte" style="background:#FFE66D">0xBE</span>
+                                    <span class="byte" style="background:#7B2FBE;color:white">0xEF</span>
+                                </div>
+                                <span class="endian-addr">addr → addr+3</span>
+                            </div>
+                            <div class="endian-row">
+                                <h4>Little-Endian (ARM, x86)</h4>
+                                <div class="endian-bytes">
+                                    <span class="byte" style="background:#7B2FBE;color:white">0xEF</span>
+                                    <span class="byte" style="background:#FFE66D">0xBE</span>
+                                    <span class="byte" style="background:#00F5D4">0xAD</span>
+                                    <span class="byte" style="background:#FF6B35">0xDE</span>
+                                </div>
+                                <span class="endian-addr">addr → addr+3</span>
+                            </div>
+                        </div>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">endian.c</span>
+                            </div>
+                            <pre><code>uint32_t value = 0xDEADBEEF;
+uint8_t *bytes = (uint8_t*)&amp;value;
+// On little-endian ARM:
+// bytes[0] = 0xEF, bytes[1] = 0xBE
+// bytes[2] = 0xAD, bytes[3] = 0xDE</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Struct Packing -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📦</span>
+                        <h3>Struct Packing</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Compilers add padding bytes for alignment, wasting precious memory. Use <code>__attribute__((packed))</code> to eliminate padding — but beware of alignment faults on some architectures.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">struct_packing.c</span>
+                            </div>
+                            <pre><code>// With padding: 12 bytes!
+struct sensor_data {
+    uint8_t  id;       // 1 + 3 padding
+    uint32_t timestamp; // 4
+    uint16_t value;     // 2 + 2 padding
+};
+
+// Packed: 7 bytes
+struct __attribute__((packed)) sensor_packed {
+    uint8_t  id;        // 1
+    uint32_t timestamp; // 4
+    uint16_t value;     // 2
+};</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             BITWISE SECTION (03)
+             ================================================= -->
+        <section id="bitwise" class="content-section">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h2 class="section-title">Bit-Level Mastery</h2>
+                <p class="section-subtitle">The fundamental skill of embedded programming</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Interactive Bit Calculator (span-3, featured) -->
+                <div class="bento-card bento-card--span-3 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧮</span>
+                        <h3>Interactive Bit Calculator</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Click individual bits to toggle them. Select a bitwise operation and see the result in real-time. This is how embedded engineers think!</p>
+                        <div class="viz-container bit-calculator" id="bit-calculator">
+                            <div class="bit-row">
+                                <label>A</label>
+                                <div class="bit-cells" id="bitwise-input-a">
+                                    <div class="bit-cell" data-bit="7">0</div>
+                                    <div class="bit-cell" data-bit="6">0</div>
+                                    <div class="bit-cell" data-bit="5">0</div>
+                                    <div class="bit-cell" data-bit="4">0</div>
+                                    <div class="bit-cell" data-bit="3">0</div>
+                                    <div class="bit-cell" data-bit="2">0</div>
+                                    <div class="bit-cell" data-bit="1">0</div>
+                                    <div class="bit-cell" data-bit="0">0</div>
+                                </div>
+                                <span class="bit-value" id="val-a">0x00 (0)</span>
+                            </div>
+                            <div class="bit-op-selector" id="bitwise-op-selector">
+                                <button class="btn btn--small active" data-op="and">AND</button>
+                                <button class="btn btn--small" data-op="or">OR</button>
+                                <button class="btn btn--small" data-op="xor">XOR</button>
+                                <button class="btn btn--small" data-op="not">NOT</button>
+                                <button class="btn btn--small" data-op="lshift">LSH</button>
+                                <button class="btn btn--small" data-op="rshift">RSH</button>
+                            </div>
+                            <div class="bit-row">
+                                <label>B</label>
+                                <div class="bit-cells" id="bitwise-input-b">
+                                    <div class="bit-cell" data-bit="7">0</div>
+                                    <div class="bit-cell" data-bit="6">0</div>
+                                    <div class="bit-cell" data-bit="5">0</div>
+                                    <div class="bit-cell" data-bit="4">0</div>
+                                    <div class="bit-cell" data-bit="3">0</div>
+                                    <div class="bit-cell" data-bit="2">0</div>
+                                    <div class="bit-cell" data-bit="1">0</div>
+                                    <div class="bit-cell" data-bit="0">0</div>
+                                </div>
+                                <span class="bit-value" id="val-b">0x00 (0)</span>
+                            </div>
+                            <div class="bit-divider"></div>
+                            <div class="bit-row result">
+                                <label>=</label>
+                                <div class="bit-cells" id="bitwise-result">
+                                    <div class="bit-cell result" data-bit="7">0</div>
+                                    <div class="bit-cell result" data-bit="6">0</div>
+                                    <div class="bit-cell result" data-bit="5">0</div>
+                                    <div class="bit-cell result" data-bit="4">0</div>
+                                    <div class="bit-cell result" data-bit="3">0</div>
+                                    <div class="bit-cell result" data-bit="2">0</div>
+                                    <div class="bit-cell result" data-bit="1">0</div>
+                                    <div class="bit-cell result" data-bit="0">0</div>
+                                </div>
+                                <span class="bit-value" id="val-result">0x00 (0)</span>
+                            </div>
+                            <div class="bit-code-output" id="bit-code-output">
+                                <code>result = A &amp; B;</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Set a Bit -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">✅</span>
+                        <h3>Set a Bit</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Use the OR operator with a shifted 1 to <strong>set</strong> a specific bit to 1 without affecting other bits.</p>
+                        <div class="mini-bit-visual">
+                            <span class="mini-bit">0</span><span class="mini-bit">0</span><span class="mini-bit active">1</span><span class="mini-bit">0</span><span class="mini-bit">0</span><span class="mini-bit">0</span><span class="mini-bit">0</span><span class="mini-bit">0</span>
+                        </div>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">set_bit.c</span>
+                            </div>
+                            <pre><code>// Set bit n in register
+REG |= (1U &lt;&lt; n);
+
+// Example: drive PA5 high
+GPIOA->ODR |= (1U &lt;&lt; 5);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Clear a Bit -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">❌</span>
+                        <h3>Clear a Bit</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Use the AND operator with the inverted mask to <strong>clear</strong> a specific bit to 0 without affecting other bits.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">clear_bit.c</span>
+                            </div>
+                            <pre><code>// Clear bit n in register
+REG &amp;= ~(1U &lt;&lt; n);
+
+// Example: drive PA5 low
+GPIOA->ODR &amp;= ~(1U &lt;&lt; 5);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Toggle a Bit -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔀</span>
+                        <h3>Toggle a Bit</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Use the XOR operator to <strong>flip</strong> a bit — if it's 0 it becomes 1, and vice versa. Perfect for blinking LEDs!</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">toggle_bit.c</span>
+                            </div>
+                            <pre><code>// Toggle bit n
+REG ^= (1U &lt;&lt; n);
+
+// Example: Blink LED on pin 5
+GPIOA->ODR ^= (1U &lt;&lt; 5);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Check a Bit -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔎</span>
+                        <h3>Check a Bit</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Use the AND operator to <strong>test</strong> whether a specific bit is set. The result is non-zero if the bit is 1.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">check_bit.c</span>
+                            </div>
+                            <pre><code>// Check if bit n is set
+if (REG &amp; (1U &lt;&lt; n)) {
+    // Bit is set
+}
+
+// Example: Read button on pin 0
+if (GPIOA->IDR &amp; (1U &lt;&lt; 0)) {
+    button_pressed = 1;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Bit Masks (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🎭</span>
+                        <h3>Bit Masks</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Bit masks let you isolate, modify, or test groups of bits simultaneously. Define them as named constants for readability. The pattern of "clear then set" is essential for multi-bit fields like GPIO mode registers.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">bit_masks.c</span>
+                            </div>
+                            <pre><code>#define LED_MASK    0x0F    // Bits 0-3
+#define STATUS_MASK 0xF0    // Bits 4-7
+
+// Apply mask to read specific bits
+uint8_t leds = PORT &amp; LED_MASK;
+
+// Clear then set a field in ONE write
+// (two separate writes would briefly
+//  output a glitch value on real pins)
+uint32_t tmp = REG;
+tmp &amp;= ~LED_MASK;            // Clear field
+tmp |= (value &amp; LED_MASK);   // Insert new value
+REG = tmp;</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             POINTERS SECTION (04)
+             ================================================= -->
+        <section id="pointers" class="content-section">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h2 class="section-title">Pointers &amp; Memory Access</h2>
+                <p class="section-subtitle">The bridge between software and hardware</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Pointer Fundamentals (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">👆</span>
+                        <h3>Pointer Fundamentals</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>A pointer is a variable that stores the <strong>memory address</strong> of another variable. In embedded C, pointers are your primary tool for accessing hardware registers and manipulating memory directly.</p>
+                        <div class="pointer-visual">
+                            <div class="ptr-var-box">
+                                <span class="ptr-label">sensor_reading</span>
+                                <span class="ptr-value">42</span>
+                                <span class="ptr-addr">0x20000004</span>
+                            </div>
+                            <div class="ptr-arrow">←</div>
+                            <div class="ptr-var-box pointer">
+                                <span class="ptr-label">ptr</span>
+                                <span class="ptr-value">0x20000004</span>
+                                <span class="ptr-addr">0x20000008</span>
+                            </div>
+                        </div>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">pointers.c</span>
+                            </div>
+                            <pre><code>int32_t sensor_reading = 42;
+int32_t *ptr = &amp;sensor_reading;
+
+*ptr = 100;  // sensor_reading is now 100
+
+printf("Value: %ld\n", (long)*ptr); // 100
+printf("Address: %p\n", (void*)ptr); // 0x20000004</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Pointer Arithmetic -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">➕</span>
+                        <h3>Pointer Arithmetic</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>When you increment a pointer, it advances by the <strong>size of the type</strong> it points to — not by one byte. This is crucial when traversing arrays or memory-mapped registers.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">ptr_arithmetic.c</span>
+                            </div>
+                            <pre><code>uint8_t data[4] = {0xAA, 0xBB, 0xCC, 0xDD};
+uint8_t *p = data;
+
+p++;               // moves 1 byte (sizeof(uint8_t))
+uint8_t v = *p;    // v = 0xBB
+
+uint32_t *p32 = (uint32_t*)data;
+p32++;             // moves 4 bytes (sizeof(uint32_t))
+// ⚠️ Casting a byte array to uint32_t* can be
+// misaligned — use memcpy() in real code.</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Function Pointers -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📞</span>
+                        <h3>Function Pointers</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Function pointers store the address of a function. They're used extensively in embedded systems for interrupt vector tables, callback mechanisms, and state machines.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">func_pointers.c</span>
+                            </div>
+                            <pre><code>typedef void (*handler_t)(void);
+
+void led_on(void)  { GPIOA->BSRR = (1U &lt;&lt; 5); }
+void led_off(void) { GPIOA->BSRR = (1U &lt;&lt; 21); }
+
+// Table of callbacks (same idea as the
+// interrupt vector table in startup code)
+handler_t actions[] = { led_off, led_on };
+
+// Call via pointer
+actions[state]();</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Memory-Mapped I/O (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🔌</span>
+                        <h3>Memory-Mapped I/O</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>This is THE most important concept in embedded C. Hardware peripherals (GPIO, UART, SPI, etc.) have <strong>control registers at fixed memory addresses</strong>. By writing to those addresses with pointers, you directly control the hardware. There's no OS, no abstraction layer — just you and the silicon.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">mmio.c</span>
+                            </div>
+                            <pre><code>// Direct register access
+#define GPIOA_BASE  0x40020000
+#define GPIOA_MODER (*(volatile uint32_t*)(GPIOA_BASE + 0x00))
+#define GPIOA_ODR   (*(volatile uint32_t*)(GPIOA_BASE + 0x14))
+
+#define RCC_AHB1ENR (*(volatile uint32_t*)0x40023830)
+
+// Now use like variables!
+RCC_AHB1ENR |= (1U &lt;&lt; 0);       // GPIOA clock on
+GPIOA_MODER &amp;= ~(3U &lt;&lt; 10);     // clear MODER5
+GPIOA_MODER |=  (1U &lt;&lt; 10);     // PA5 output
+GPIOA_ODR   |=  (1U &lt;&lt; 5);      // PA5 high</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Struct Overlay -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🏗️</span>
+                        <h3>Struct Overlay</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>The professional approach: define a struct that mirrors the register layout and cast the base address to a struct pointer. This is how STM32 HAL/CMSIS headers work!</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">struct_overlay.c</span>
+                            </div>
+                            <pre><code>typedef struct {
+    volatile uint32_t MODER;   // 0x00
+    volatile uint32_t OTYPER;  // 0x04
+    volatile uint32_t OSPEEDR; // 0x08
+    volatile uint32_t PUPDR;   // 0x0C
+    volatile const uint32_t IDR; // 0x10 (read-only)
+    volatile uint32_t ODR;     // 0x14
+} GPIO_TypeDef;
+
+#define GPIOA ((GPIO_TypeDef*)0x40020000)
+
+GPIOA->ODR |= (1U &lt;&lt; 5);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Interactive Pointer Visualizer (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span>
+                        <h3>Interactive Pointer Visualizer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Create variables and pointers, then dereference them to see how pointers navigate memory.</p>
+                        <div class="viz-container">
+                            <canvas id="pointer-viz-canvas" width="560" height="280"></canvas>
+                            <div class="viz-controls">
+                                <button class="btn btn--primary btn--small" id="ptr-create-var">Create Variable</button>
+                                <button class="btn btn--accent btn--small" id="ptr-create-ptr">Create Pointer</button>
+                                <button class="btn btn--secondary btn--small" id="ptr-deref">Dereference</button>
+                                <button class="btn btn--secondary btn--small" id="ptr-reset">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             REGISTERS SECTION (05)
+             ================================================= -->
+        <section id="registers" class="content-section">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h2 class="section-title">Hardware Registers &amp; GPIO</h2>
+                <p class="section-subtitle">Controlling real hardware through register manipulation</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Interactive Register Explorer (span-3, featured) -->
+                <div class="bento-card bento-card--span-3 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🎛️</span>
+                        <h3>Interactive Register Explorer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Click individual bits to toggle them. Each pin owns 2 bits (00 Input, 01 Output, 10 Alternate Function, 11 Analog). It starts at the real STM32F4 reset value <code>0xA8000000</code>: PA13–PA15 are already AF because they carry the SWD/JTAG debug signals. Watch the hex, binary, and per-pin decode update live.</p>
+                        <div class="viz-container register-explorer" id="register-explorer">
+                            <h4>GPIO MODER Register (32-bit)</h4>
+                            <div class="register-display" id="register-display">
+                                <!-- All 32 bit cells, bit 31 down to bit 0 -->
+                                <div class="bit-cell reg-bit" data-bit="31">0</div>
+                                <div class="bit-cell reg-bit" data-bit="30">0</div>
+                                <div class="bit-cell reg-bit" data-bit="29">0</div>
+                                <div class="bit-cell reg-bit" data-bit="28">0</div>
+                                <div class="bit-cell reg-bit" data-bit="27">0</div>
+                                <div class="bit-cell reg-bit" data-bit="26">0</div>
+                                <div class="bit-cell reg-bit" data-bit="25">0</div>
+                                <div class="bit-cell reg-bit" data-bit="24">0</div>
+                                <div class="bit-cell reg-bit" data-bit="23">0</div>
+                                <div class="bit-cell reg-bit" data-bit="22">0</div>
+                                <div class="bit-cell reg-bit" data-bit="21">0</div>
+                                <div class="bit-cell reg-bit" data-bit="20">0</div>
+                                <div class="bit-cell reg-bit" data-bit="19">0</div>
+                                <div class="bit-cell reg-bit" data-bit="18">0</div>
+                                <div class="bit-cell reg-bit" data-bit="17">0</div>
+                                <div class="bit-cell reg-bit" data-bit="16">0</div>
+                                <div class="bit-cell reg-bit" data-bit="15">0</div>
+                                <div class="bit-cell reg-bit" data-bit="14">0</div>
+                                <div class="bit-cell reg-bit" data-bit="13">0</div>
+                                <div class="bit-cell reg-bit" data-bit="12">0</div>
+                                <div class="bit-cell reg-bit" data-bit="11">0</div>
+                                <div class="bit-cell reg-bit" data-bit="10">0</div>
+                                <div class="bit-cell reg-bit" data-bit="9">0</div>
+                                <div class="bit-cell reg-bit" data-bit="8">0</div>
+                                <div class="bit-cell reg-bit" data-bit="7">0</div>
+                                <div class="bit-cell reg-bit" data-bit="6">0</div>
+                                <div class="bit-cell reg-bit" data-bit="5">0</div>
+                                <div class="bit-cell reg-bit" data-bit="4">0</div>
+                                <div class="bit-cell reg-bit" data-bit="3">0</div>
+                                <div class="bit-cell reg-bit" data-bit="2">0</div>
+                                <div class="bit-cell reg-bit" data-bit="1">0</div>
+                                <div class="bit-cell reg-bit" data-bit="0">0</div>
+                            </div>
+                            <div class="register-fields">
+                                <div class="reg-field" style="--field-color:#FF6B35">MODER15[31:30]</div>
+                                <div class="reg-field" style="--field-color:#00F5D4">MODER14[29:28]</div>
+                                <div class="reg-field" style="--field-color:#FFE66D">MODER13[27:26]</div>
+                                <div class="reg-field" style="--field-color:#7B68EE">MODER12[25:24]</div>
+                                <span>...</span>
+                                <div class="reg-field" style="--field-color:#FFE66D">MODER1[3:2]</div>
+                                <div class="reg-field" style="--field-color:#7B2FBE;color:white">MODER0[1:0]</div>
+                            </div>
+                            <div class="register-value">
+                                <span>Hex: </span><code id="reg-hex-value">0x00000000</code>
+                                <span>Binary: </span><code id="reg-bin-value">0b00000000000000000000000000000000</code>
+                            </div>
+                            <div class="register-code" id="register-code">
+                                <code>GPIOA->MODER = 0x00000000;</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: GPIO Configuration (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🔧</span>
+                        <h3>GPIO Configuration</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Configuring a GPIO pin for output requires setting multiple registers: clock enable, pin mode, output type, speed, and pull-up/pull-down. Here's the complete 5-step process for PA5 (the user LED on Nucleo boards).</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">gpio_config.c</span>
+                            </div>
+                            <pre><code>// 1. Enable GPIO clock
+RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+// 2. Set pin mode (Output)
+GPIOA->MODER &amp;= ~(3U &lt;&lt; 10);  // Clear
+GPIOA->MODER |=  (1U &lt;&lt; 10);  // Set output
+
+// 3. Set output type (Push-Pull)
+GPIOA->OTYPER &amp;= ~(1U &lt;&lt; 5);
+
+// 4. Set speed (Fast = 0b10)
+GPIOA->OSPEEDR &amp;= ~(3U &lt;&lt; 10);
+GPIOA->OSPEEDR |=  (2U &lt;&lt; 10);
+
+// 5. No pull-up/pull-down
+GPIOA->PUPDR &amp;= ~(3U &lt;&lt; 10);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Read-Modify-Write -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">✏️</span>
+                        <h3>Read-Modify-Write</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Never directly assign a register value unless you want to overwrite <strong>all</strong> bits. Always use the read-modify-write pattern to change only the bits you need.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">rmw.c</span>
+                            </div>
+                            <pre><code>// ❌ Wrong: Overwrites other bits!
+GPIOA->MODER = (1U &lt;&lt; 10);
+
+// ✅ Correct: Read-Modify-Write
+uint32_t temp = GPIOA->MODER;
+temp &amp;= ~(3U &lt;&lt; 10);  // Clear bits 10-11
+temp |=  (1U &lt;&lt; 10);  // Set bit 10
+GPIOA->MODER = temp;</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Virtual GPIO Lab (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">💡</span>
+                        <h3>Virtual GPIO Lab</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Click individual LEDs or use the pattern buttons to see how the GPIO Output Data Register (ODR) controls pins in real-time.</p>
+                        <div class="gpio-lab" id="gpio-lab">
+                            <div class="led-row">
+                                <div class="led" id="led-7" data-bit="7"><span class="led-num">7</span></div>
+                                <div class="led" id="led-6" data-bit="6"><span class="led-num">6</span></div>
+                                <div class="led" id="led-5" data-bit="5"><span class="led-num">5</span></div>
+                                <div class="led" id="led-4" data-bit="4"><span class="led-num">4</span></div>
+                                <div class="led" id="led-3" data-bit="3"><span class="led-num">3</span></div>
+                                <div class="led" id="led-2" data-bit="2"><span class="led-num">2</span></div>
+                                <div class="led" id="led-1" data-bit="1"><span class="led-num">1</span></div>
+                                <div class="led" id="led-0" data-bit="0"><span class="led-num">0</span></div>
+                            </div>
+                            <div class="gpio-register">
+                                <span>ODR: </span><code id="gpio-odr-value">0x00</code>
+                            </div>
+                            <div class="gpio-controls">
+                                <button class="btn btn--small btn--primary" id="gpio-pattern-chase">Chase</button>
+                                <button class="btn btn--small btn--accent" id="gpio-pattern-blink">Blink All</button>
+                                <button class="btn btn--small btn--secondary" id="gpio-pattern-binary">Binary Count</button>
+                                <button class="btn btn--small btn--secondary" id="gpio-stop">Stop</button>
+                                <button class="btn btn--small btn--secondary" id="gpio-clear">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Bit-Banding -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">⚛️</span>
+                        <h3>Bit-Banding</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>ARM Cortex-M3/M4 (e.g. STM32F4) provide a "bit-band" region that maps each bit of peripheral/SRAM memory to a unique 32-bit alias address. Writing to the alias sets or clears the bit <strong>atomically</strong> — no read-modify-write needed!</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">bit_banding.c</span>
+                            </div>
+                            <pre><code>// Bit-band alias for atomic bit access
+#define BB_ADDR(reg, bit) \
+  (0x42000000UL + (((reg) - 0x40000000UL) * 32UL) + ((bit) * 4UL))
+
+// Set bit 5 of GPIOA->ODR atomically
+*((volatile uint32_t*)BB_ADDR(0x40020014, 5)) = 1;
+// (Not available on Cortex-M0/M7/M33 — use BSRR there)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             INTERRUPTS SECTION (06)
+             ================================================= -->
+        <section id="interrupts" class="content-section">
+            <div class="section-header">
+                <span class="section-number">06</span>
+                <h2 class="section-title">Interrupts &amp; ISRs</h2>
+                <p class="section-subtitle">Responding to real-time events in hardware</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: How Interrupts Work (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">⚡</span>
+                        <h3>How Interrupts Work</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>When an interrupt fires, the CPU automatically saves context (key registers), jumps to the Interrupt Service Routine (ISR), executes it, restores context, and resumes the main code. This all happens in hardware — fast and deterministic.</p>
+                        <div class="interrupt-flow">
+                            <div class="flow-step main">Main Code Running</div>
+                            <div class="flow-arrow">⚡ IRQ Fires!</div>
+                            <div class="flow-step save">Context Saved (Push R0-R3, R12, LR, PC, xPSR)</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step isr">ISR Executes</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step restore">Context Restored (Pop registers)</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step main">Main Code Resumes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: ISR Best Practices -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📋</span>
+                        <h3>ISR Best Practices</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <ul class="best-practices-list">
+                            <li>✅ Keep ISRs short and fast</li>
+                            <li>✅ Set a flag, process in main loop</li>
+                            <li>✅ Use volatile for shared variables</li>
+                            <li>❌ No malloc/free in ISRs</li>
+                            <li>❌ No printf or blocking calls</li>
+                            <li>❌ No long loops</li>
+                        </ul>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">isr_pattern.c</span>
+                            </div>
+                            <pre><code>#define RX_SIZE 64
+volatile uint8_t rx_buffer[RX_SIZE];
+volatile uint8_t idx = 0;
+volatile uint8_t data_ready = 0;
+
+void USART1_IRQHandler(void) {
+    if (USART1->SR &amp; USART_SR_RXNE) {
+        uint8_t b = (uint8_t)USART1->DR; // read clears RXNE
+        if (idx &lt; RX_SIZE) rx_buffer[idx++] = b;
+        data_ready = 1;  // main loop does the work
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: NVIC Configuration -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🎚️</span>
+                        <h3>NVIC Configuration</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>The Nested Vectored Interrupt Controller (NVIC) manages interrupt priorities and enables/disables specific interrupt lines on ARM Cortex-M processors.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">nvic_config.c</span>
+                            </div>
+                            <pre><code>// Configure External Interrupt on PA0
+
+// 1. Enable GPIOA + SYSCFG clocks
+//    (PA0 is an input after reset)
+RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+// 2. Select PA0 for EXTI0
+SYSCFG->EXTICR[0] &amp;= ~0xFU;
+
+// 3. Enable rising edge trigger
+EXTI->RTSR |= (1U &lt;&lt; 0);
+
+// 4. Unmask EXTI0
+EXTI->IMR |= (1U &lt;&lt; 0);
+
+// 5. Enable in NVIC
+NVIC_SetPriority(EXTI0_IRQn, 2);
+NVIC_EnableIRQ(EXTI0_IRQn);
+
+// 6. The handler MUST clear the pending bit,
+//    or it re-enters forever
+void EXTI0_IRQHandler(void) {
+    if (EXTI->PR &amp; (1U &lt;&lt; 0)) {
+        EXTI->PR = (1U &lt;&lt; 0);  // write 1 to clear
+        button_flag = 1;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Interactive Interrupt Timeline (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span>
+                        <h3>Interactive Interrupt Timeline</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Visualize how interrupts preempt the main code. Run the main loop and trigger an IRQ. Trigger a <strong>same-priority</strong> IRQ while an ISR runs and it waits, then <em>tail-chains</em> straight into a second ISR. A <strong>higher-priority</strong> IRQ preempts the running ISR (nesting).</p>
+                        <div class="viz-container">
+                            <canvas id="interrupt-viz-canvas" width="560" height="280"></canvas>
+                            <div class="viz-controls">
+                                <button class="btn btn--primary btn--small" id="int-run">▶ Run Main</button>
+                                <button class="btn btn--accent btn--small" id="int-trigger">⚡ Trigger IRQ</button>
+                                <button class="btn btn--secondary btn--small" id="int-trigger-nested">⚡⚡ Higher-Priority IRQ</button>
+                                <button class="btn btn--secondary btn--small" id="int-reset">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Critical Sections -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔒</span>
+                        <h3>Critical Sections</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>When main code and ISRs share data, you must protect access to prevent race conditions. Disabling interrupts briefly creates a "critical section" where no preemption can occur.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">critical_section.c</span>
+                            </div>
+                            <pre><code>// Method 1: Disable/Enable all interrupts
+__disable_irq();
+shared_counter++;  // Safe access
+__enable_irq();
+
+// Method 2: Save and restore state
+uint32_t primask = __get_PRIMASK();
+__disable_irq();
+shared_data = new_value;
+__set_PRIMASK(primask);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Volatile Deep Dive -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔬</span>
+                        <h3>Volatile Deep Dive</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Without <code>volatile</code>, the compiler may optimize away "redundant" writes to the same address. But for hardware registers, every write has a side effect!</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">volatile_deep.c</span>
+                            </div>
+                            <pre><code>// ❌ Compiler may optimize this:
+uint32_t *reg = (uint32_t*)0x40020014;
+*reg = 1;  // Compiler: "I'll keep this..."
+*reg = 2;  // Compiler: "...and skip this!"
+
+// ✅ volatile prevents optimization:
+volatile uint32_t *reg = 
+    (volatile uint32_t*)0x40020014;
+*reg = 1;  // Write happens
+*reg = 2;  // This write also happens</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             PROTOCOLS SECTION (07)
+             ================================================= -->
+        <section id="protocols" class="content-section">
+            <div class="section-header">
+                <span class="section-number">07</span>
+                <h2 class="section-title">Communication Protocols</h2>
+                <p class="section-subtitle">UART, SPI, I2C — talking to sensors, displays, and other chips</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Protocol Lab: tabbed UART / SPI / I2C -->
+                <div class="bento-card bento-card--span-3 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">📡</span>
+                        <h3>Protocol Lab — Circuit &amp; Step Simulation</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Pick a protocol tab. Load a transfer, then advance <strong>step by step</strong> (or Play) to watch each bit move MCU → device.</p>
+                        <div class="proto-tabs" role="tablist" aria-label="Protocol">
+                            <button type="button" class="proto-tab active" role="tab" aria-selected="true" data-tab="uart" id="tab-btn-uart">UART</button>
+                            <button type="button" class="proto-tab" role="tab" aria-selected="false" data-tab="spi" id="tab-btn-spi">SPI</button>
+                            <button type="button" class="proto-tab" role="tab" aria-selected="false" data-tab="i2c" id="tab-btn-i2c">I2C</button>
+                        </div>
+
+                        <div class="proto-tab-panel active" id="tab-panel-uart" role="tabpanel" data-tab-panel="uart">
+                        <div class="protocol-lab" id="uart-lab" data-protocol="uart">
+                            <div class="proto-blurb">
+                                <h4>UART in brief</h4>
+                                <p><strong>Universal Asynchronous Receiver-Transmitter</strong> — two devices talk over TX and RX with a shared baud rate, no shared clock. Each byte is framed as idle-high → start bit (0) → 8 data bits (LSB first) → stop bit (1). Common for debug consoles, GPS, and Bluetooth modules.</p>
+                                <ul>
+                                    <li><strong>Wires:</strong> TX, RX, GND (sometimes RTS/CTS)</li>
+                                    <li><strong>Strength:</strong> simple, full-duplex, point-to-point</li>
+                                    <li><strong>Watch for:</strong> baud mismatch and crossed TX/RX</li>
+                                </ul>
+                            </div>
+                            <div class="schematic-panel" id="uart-breadboard">
+                                <svg class="schematic-svg" viewBox="0 0 640 220" role="img" aria-label="UART circuit: STM32 connected to USB-UART adapter">
+                                    <rect class="sch-board" x="8" y="8" width="624" height="204" rx="10"/>
+                                    <!-- MCU -->
+                                    <g class="sch-chip sch-mcu" data-action="load" tabindex="0" role="button" aria-label="STM32 MCU — click to run">
+                                        <rect x="40" y="40" width="140" height="140" rx="8"/>
+                                        <text x="50" y="78" text-anchor="start" class="sch-title">STM32</text>
+                                        <text x="50" y="98" text-anchor="start" class="sch-sub">USART1</text>
+                                        <circle class="sch-pad" data-wire="tx" cx="180" cy="80" r="8"/>
+                                        <text class="sch-pin-label" x="168" y="84" text-anchor="end">PA9 TX</text>
+                                        <circle class="sch-pad" data-wire="rx" cx="180" cy="120" r="8"/>
+                                        <text class="sch-pin-label" x="168" y="124" text-anchor="end">PA10 RX</text>
+                                        <circle class="sch-pad" data-wire="gnd" cx="180" cy="160" r="8"/>
+                                        <text class="sch-pin-label" x="168" y="164" text-anchor="end">GND</text>
+                                    </g>
+                                    <!-- Wires -->
+                                    <path class="sch-wire" data-wire="tx" d="M188 80 H300 V80 H452" stroke="#FF6B35"/>
+                                    <path class="sch-wire" data-wire="rx" d="M188 120 H300 V120 H452" stroke="#00F5D4"/>
+                                    <path class="sch-wire" data-wire="gnd" d="M188 160 H300 V160 H452" stroke="#6E7681"/>
+                                    <text class="sch-wire-label" data-wire="tx" x="320" y="72" fill="#FF6B35">TX</text>
+                                    <text class="sch-wire-label" data-wire="rx" x="320" y="112" fill="#00F5D4">RX</text>
+                                    <text class="sch-wire-label" data-wire="gnd" x="320" y="152" fill="#6E7681">GND</text>
+                                    <!-- Device -->
+                                    <g class="sch-chip sch-dev" data-action="load" tabindex="0" role="button" aria-label="USB-UART — click to run">
+                                        <rect x="460" y="40" width="140" height="140" rx="8"/>
+                                        <text x="590" y="78" text-anchor="end" class="sch-title">USB-UART</text>
+                                        <text x="590" y="98" text-anchor="end" class="sch-sub">Terminal</text>
+                                        <circle class="sch-pad" data-wire="tx" cx="460" cy="80" r="8"/>
+                                        <text class="sch-pin-label" x="472" y="84">RXD</text>
+                                        <circle class="sch-pad" data-wire="rx" cx="460" cy="120" r="8"/>
+                                        <text class="sch-pin-label" x="472" y="124">TXD</text>
+                                        <circle class="sch-pad" data-wire="gnd" cx="460" cy="160" r="8"/>
+                                        <text class="sch-pin-label" x="472" y="164">GND</text>
+                                    </g>
+                                    <!-- Moving data packet on TX -->
+                                    <g class="xfer-svg-packet" id="uart-svg-packet" visibility="hidden">
+                                        <rect x="-28" y="-12" width="56" height="24" rx="6" fill="#FF6B35" stroke="#000" stroke-width="2"/>
+                                        <text x="0" y="5" text-anchor="middle" class="xfer-svg-text">0x41</text>
+                                    </g>
+                                </svg>
+                                <div class="xfer-panel" id="uart-xfer-panel">
+                                    <div class="xfer-endpoint">
+                                        <span class="xfer-tag">MCU TX</span>
+                                        <code id="uart-xfer-mcu">—</code>
+                                    </div>
+                                    <div class="xfer-track">
+                                        <div class="xfer-packet" id="uart-xfer-packet">···</div>
+                                    </div>
+                                    <div class="xfer-endpoint">
+                                        <span class="xfer-tag">Terminal RX</span>
+                                        <code id="uart-xfer-dev">waiting…</code>
+                                    </div>
+                                </div>
+                                <div class="bb-status" id="uart-bb-status">Click a pin to probe · Click MCU or Run TX to simulate</div>
+                            </div>
+                            <div class="proto-controls">
+                                <div class="control-group">
+                                    <label for="uart-byte-input">Byte</label>
+                                    <input type="text" id="uart-byte-input" value="0x41" class="input-field" maxlength="4">
+                                    <span class="uart-char-display" id="uart-char-display">'A'</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="uart-baud-select">Baud</label>
+                                    <select id="uart-baud-select" class="input-field">
+                                        <option value="9600">9600</option>
+                                        <option value="115200" selected>115200</option>
+                                        <option value="921600">921600</option>
+                                    </select>
+                                </div>
+                                <div class="control-group proto-speed-group">
+                                    <label for="uart-speed">Speed <span id="uart-speed-label">1×</span></label>
+                                    <input type="range" id="uart-speed" class="slider proto-speed" min="0.25" max="4" step="0.25" value="1">
+                                </div>
+                                <button type="button" class="btn btn--secondary" id="uart-reset" data-action="reset">Reset</button>
+                                <button type="button" class="btn btn--secondary" id="uart-prev" data-action="prev">← Prev</button>
+                                <button type="button" class="btn btn--primary" id="uart-next" data-action="next">Next Step →</button>
+                                <button type="button" class="btn btn--accent" id="uart-run" data-action="play">▶ Play</button>
+                            </div>
+                            <div class="proto-step-meta" id="uart-step-meta">Step — / — · Load a transfer to begin</div>
+                            <canvas id="uart-lab-canvas" class="proto-scope" width="720" height="200"></canvas>
+                            <div class="uart-legend">
+                                <span class="legend-item"><span class="legend-color" style="background:#888"></span>Idle</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#FF6B35"></span>Start</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#00F5D4"></span>Data</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#7B2FBE"></span>Stop</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div class="proto-tab-panel" id="tab-panel-spi" role="tabpanel" data-tab-panel="spi" hidden>
+                        <div class="protocol-lab" id="spi-lab" data-protocol="spi">
+                            <div class="proto-blurb">
+                                <h4>SPI in brief</h4>
+                                <p><strong>Serial Peripheral Interface</strong> — a master clocks data to/from slaves with a shared clock. Full-duplex: MOSI and MISO shift at the same time. Chip Select (CS) picks which slave is active. Fast and common for displays, flash, and ADCs.</p>
+                                <ul>
+                                    <li><strong>Wires:</strong> SCK, MOSI, MISO, CS (+ GND)</li>
+                                    <li><strong>Strength:</strong> high speed, simple shifting, multiple slaves via CS lines</li>
+                                    <li><strong>Watch for:</strong> mode (CPOL/CPHA), CS polarity, and bit order</li>
+                                </ul>
+                            </div>
+                            <div class="schematic-panel" id="spi-breadboard">
+                                <svg class="schematic-svg" viewBox="0 0 640 250" role="img" aria-label="SPI circuit: STM32 connected to SPI flash">
+                                    <rect class="sch-board" x="8" y="8" width="624" height="234" rx="10"/>
+                                    <g class="sch-chip sch-mcu" data-action="load" tabindex="0" role="button" aria-label="STM32 SPI1 — click to transfer">
+                                        <rect x="36" y="30" width="150" height="190" rx="8"/>
+                                        <text x="50" y="58" text-anchor="start" class="sch-title">STM32</text>
+                                        <text x="50" y="76" text-anchor="start" class="sch-sub">SPI1</text>
+                                        <circle class="sch-pad" data-wire="cs" cx="186" cy="70" r="8"/><text class="sch-pin-label" x="174" y="74" text-anchor="end">PA4 CS</text>
+                                        <circle class="sch-pad" data-wire="sck" cx="186" cy="110" r="8"/><text class="sch-pin-label" x="174" y="114" text-anchor="end">PA5 SCK</text>
+                                        <circle class="sch-pad" data-wire="miso" cx="186" cy="150" r="8"/><text class="sch-pin-label" x="174" y="154" text-anchor="end">PA6 MISO</text>
+                                        <circle class="sch-pad" data-wire="mosi" cx="186" cy="190" r="8"/><text class="sch-pin-label" x="174" y="194" text-anchor="end">PA7 MOSI</text>
+                                    </g>
+                                    <path class="sch-wire" data-wire="cs" d="M194 70 H450" stroke="#7B2FBE"/>
+                                    <path class="sch-wire" data-wire="sck" d="M194 110 H450" stroke="#FFE66D"/>
+                                    <path class="sch-wire" data-wire="miso" d="M194 150 H450" stroke="#00F5D4"/>
+                                    <path class="sch-wire" data-wire="mosi" d="M194 190 H450" stroke="#FF6B35"/>
+                                    <text class="sch-wire-label" x="320" y="62" fill="#7B2FBE">CS</text>
+                                    <text class="sch-wire-label" x="320" y="102" fill="#FFE66D">SCK</text>
+                                    <text class="sch-wire-label" x="320" y="142" fill="#00F5D4">MISO</text>
+                                    <text class="sch-wire-label" x="320" y="182" fill="#FF6B35">MOSI</text>
+                                    <g class="sch-chip sch-dev" data-action="load" tabindex="0" role="button" aria-label="SPI Flash — click to transfer">
+                                        <rect x="450" y="30" width="150" height="190" rx="8"/>
+                                        <text x="590" y="58" text-anchor="end" class="sch-title">SPI Flash</text>
+                                        <text x="590" y="76" text-anchor="end" class="sch-sub">Mode 0</text>
+                                        <circle class="sch-pad" data-wire="cs" cx="450" cy="70" r="8"/><text class="sch-pin-label" x="462" y="74">/CS</text>
+                                        <circle class="sch-pad" data-wire="sck" cx="450" cy="110" r="8"/><text class="sch-pin-label" x="462" y="114">CLK</text>
+                                        <circle class="sch-pad" data-wire="miso" cx="450" cy="150" r="8"/><text class="sch-pin-label" x="462" y="154">DO</text>
+                                        <circle class="sch-pad" data-wire="mosi" cx="450" cy="190" r="8"/><text class="sch-pin-label" x="462" y="194">DI</text>
+                                    </g>
+                                    <g class="xfer-svg-packet" id="spi-svg-mosi" visibility="hidden">
+                                        <rect x="-28" y="-12" width="56" height="24" rx="6" fill="#FF6B35" stroke="#000" stroke-width="2"/>
+                                        <text x="0" y="5" text-anchor="middle" class="xfer-svg-text">MOSI</text>
+                                    </g>
+                                    <g class="xfer-svg-packet" id="spi-svg-miso" visibility="hidden">
+                                        <rect x="-28" y="-12" width="56" height="24" rx="6" fill="#00F5D4" stroke="#000" stroke-width="2"/>
+                                        <text x="0" y="5" text-anchor="middle" class="xfer-svg-text">MISO</text>
+                                    </g>
+                                </svg>
+                                <div class="xfer-panel xfer-panel--dual" id="spi-xfer-panel">
+                                    <div class="xfer-row">
+                                        <div class="xfer-endpoint"><span class="xfer-tag">MCU → MOSI</span><code id="spi-xfer-mosi-mcu">—</code></div>
+                                        <div class="xfer-track"><div class="xfer-packet xfer-packet--out" id="spi-xfer-mosi-pkt">···</div></div>
+                                        <div class="xfer-endpoint"><span class="xfer-tag">Flash DI</span><code id="spi-xfer-mosi-dev">waiting…</code></div>
+                                    </div>
+                                    <div class="xfer-row">
+                                        <div class="xfer-endpoint"><span class="xfer-tag">MCU ← MISO</span><code id="spi-xfer-miso-mcu">waiting…</code></div>
+                                        <div class="xfer-track"><div class="xfer-packet xfer-packet--in" id="spi-xfer-miso-pkt">···</div></div>
+                                        <div class="xfer-endpoint"><span class="xfer-tag">Flash DO</span><code id="spi-xfer-miso-dev">—</code></div>
+                                    </div>
+                                </div>
+                                <div class="bb-status" id="spi-bb-status">Click a pin to probe · Click chip or Transfer to simulate</div>
+                            </div>
+                            <div class="proto-controls">
+                                <div class="control-group">
+                                    <label for="spi-byte-input">MOSI byte</label>
+                                    <input type="text" id="spi-byte-input" value="0x9F" class="input-field" maxlength="4">
+                                </div>
+                                <div class="control-group">
+                                    <label>Mode</label>
+                                    <span class="proto-fixed-label">Mode 0 (CPOL=0, CPHA=0)</span>
+                                </div>
+                                <div class="control-group proto-speed-group">
+                                    <label for="spi-speed">Speed <span id="spi-speed-label">1×</span></label>
+                                    <input type="range" id="spi-speed" class="slider proto-speed" min="0.25" max="4" step="0.25" value="1">
+                                </div>
+                                <button type="button" class="btn btn--secondary" id="spi-reset" data-action="reset">Reset</button>
+                                <button type="button" class="btn btn--secondary" id="spi-prev" data-action="prev">← Prev</button>
+                                <button type="button" class="btn btn--primary" id="spi-next" data-action="next">Next Step →</button>
+                                <button type="button" class="btn btn--accent" id="spi-run" data-action="play">▶ Play</button>
+                            </div>
+                            <div class="proto-step-meta" id="spi-step-meta">Step — / — · Load a transfer to begin</div>
+                            <canvas id="spi-lab-canvas" class="proto-scope" width="720" height="260"></canvas>
+                            <div class="uart-legend">
+                                <span class="legend-item"><span class="legend-color" style="background:#7B2FBE"></span>CS</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#FFE66D"></span>SCK</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#FF6B35"></span>MOSI</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#00F5D4"></span>MISO</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div class="proto-tab-panel" id="tab-panel-i2c" role="tabpanel" data-tab-panel="i2c" hidden>
+                        <div class="protocol-lab" id="i2c-lab" data-protocol="i2c">
+                            <div class="proto-blurb">
+                                <h4>I2C in brief</h4>
+                                <p><strong>Inter-Integrated Circuit</strong> — a shared two-wire bus (SDA + SCL) with pull-ups. Devices have 7-bit addresses. A write often looks like START → address+W → ACK → register → ACK → data → ACK → STOP. Great for sensors and EEPROMs on few pins.</p>
+                                <ul>
+                                    <li><strong>Wires:</strong> SDA, SCL, GND (+ pull-ups to 3V3)</li>
+                                    <li><strong>Strength:</strong> many devices, only two signal wires</li>
+                                    <li><strong>Watch for:</strong> address conflicts, missing pull-ups, and ACK/NACK</li>
+                                </ul>
+                            </div>
+                            <div class="schematic-panel" id="i2c-breadboard">
+                                <svg class="schematic-svg" viewBox="0 0 640 230" role="img" aria-label="I2C circuit: STM32 connected to sensor 0x48 with pull-ups">
+                                    <rect class="sch-board" x="8" y="8" width="624" height="214" rx="10"/>
+                                    <g class="sch-chip sch-mcu" data-action="load" tabindex="0" role="button" aria-label="STM32 I2C1 — click to write">
+                                        <rect x="40" y="36" width="140" height="160" rx="8"/>
+                                        <text x="50" y="68" text-anchor="start" class="sch-title">STM32</text>
+                                        <text x="50" y="86" text-anchor="start" class="sch-sub">I2C1</text>
+                                        <circle class="sch-pad" data-wire="scl" cx="180" cy="90" r="8"/><text class="sch-pin-label" x="168" y="94" text-anchor="end">PB6 SCL</text>
+                                        <circle class="sch-pad" data-wire="sda" cx="180" cy="130" r="8"/><text class="sch-pin-label" x="168" y="134" text-anchor="end">PB7 SDA</text>
+                                        <circle class="sch-pad" data-wire="gnd" cx="180" cy="170" r="8"/><text class="sch-pin-label" x="168" y="174" text-anchor="end">GND</text>
+                                    </g>
+                                    <!-- Pull-ups to 3V3 -->
+                                    <line class="sch-wire" data-wire="pup" x1="300" y1="40" x2="300" y2="90" stroke="#22C55E"/>
+                                    <line class="sch-wire" data-wire="pup" x1="340" y1="40" x2="340" y2="130" stroke="#22C55E"/>
+                                    <text class="sch-wire-label" x="320" y="32" fill="#22C55E">3V3 + 4k7↑</text>
+                                    <path class="sch-wire" data-wire="scl" d="M188 90 H452" stroke="#FFE66D"/>
+                                    <path class="sch-wire" data-wire="sda" d="M188 130 H452" stroke="#FF6B35"/>
+                                    <path class="sch-wire" data-wire="gnd" d="M188 170 H452" stroke="#6E7681"/>
+                                    <text class="sch-wire-label" x="380" y="82" fill="#FFE66D">SCL</text>
+                                    <text class="sch-wire-label" x="380" y="122" fill="#FF6B35">SDA</text>
+                                    <g class="sch-chip sch-dev" data-action="load" tabindex="0" role="button" aria-label="Sensor 0x48 — click to write">
+                                        <rect x="460" y="36" width="140" height="160" rx="8"/>
+                                        <text x="590" y="68" text-anchor="end" class="sch-title">Sensor</text>
+                                        <text x="590" y="86" text-anchor="end" class="sch-sub">0x48</text>
+                                        <circle class="sch-pad" data-wire="scl" cx="460" cy="90" r="8"/><text class="sch-pin-label" x="472" y="94">SCL</text>
+                                        <circle class="sch-pad" data-wire="sda" cx="460" cy="130" r="8"/><text class="sch-pin-label" x="472" y="134">SDA</text>
+                                        <circle class="sch-pad" data-wire="gnd" cx="460" cy="170" r="8"/><text class="sch-pin-label" x="472" y="174">GND</text>
+                                    </g>
+                                    <g class="xfer-svg-packet" id="i2c-svg-packet" visibility="hidden">
+                                        <rect x="-32" y="-12" width="64" height="24" rx="6" fill="#FF6B35" stroke="#000" stroke-width="2"/>
+                                        <text x="0" y="5" text-anchor="middle" class="xfer-svg-text">DATA</text>
+                                    </g>
+                                </svg>
+                                <div class="xfer-panel" id="i2c-xfer-panel">
+                                    <div class="xfer-endpoint">
+                                        <span class="xfer-tag">MCU SDA</span>
+                                        <code id="i2c-xfer-mcu">—</code>
+                                    </div>
+                                    <div class="xfer-track">
+                                        <div class="xfer-packet" id="i2c-xfer-packet">···</div>
+                                    </div>
+                                    <div class="xfer-endpoint">
+                                        <span class="xfer-tag">Sensor</span>
+                                        <code id="i2c-xfer-dev">waiting…</code>
+                                    </div>
+                                </div>
+                                <div class="bb-status" id="i2c-bb-status">Click a pin to probe · Click chip or Write to simulate</div>
+                            </div>
+                            <div class="proto-controls">
+                                <div class="control-group">
+                                    <label for="i2c-addr-input">Addr</label>
+                                    <input type="text" id="i2c-addr-input" value="0x48" class="input-field" maxlength="4">
+                                </div>
+                                <div class="control-group">
+                                    <label for="i2c-reg-input">Reg</label>
+                                    <input type="text" id="i2c-reg-input" value="0x00" class="input-field" maxlength="4">
+                                </div>
+                                <div class="control-group">
+                                    <label for="i2c-data-input">Data</label>
+                                    <input type="text" id="i2c-data-input" value="0x2A" class="input-field" maxlength="4">
+                                </div>
+                                <div class="control-group proto-speed-group">
+                                    <label for="i2c-speed">Speed <span id="i2c-speed-label">1×</span></label>
+                                    <input type="range" id="i2c-speed" class="slider proto-speed" min="0.25" max="4" step="0.25" value="1">
+                                </div>
+                                <button type="button" class="btn btn--secondary" id="i2c-reset" data-action="reset">Reset</button>
+                                <button type="button" class="btn btn--secondary" id="i2c-prev" data-action="prev">← Prev</button>
+                                <button type="button" class="btn btn--primary" id="i2c-next" data-action="next">Next Step →</button>
+                                <button type="button" class="btn btn--accent" id="i2c-run" data-action="play">▶ Play</button>
+                            </div>
+                            <div class="proto-step-meta" id="i2c-step-meta">Step — / — · Load a transfer to begin</div>
+                            <canvas id="i2c-lab-canvas" class="proto-scope" width="720" height="220"></canvas>
+                            <div class="uart-legend">
+                                <span class="legend-item"><span class="legend-color" style="background:#FFE66D"></span>SCL</span>
+                                <span class="legend-item"><span class="legend-color" style="background:#FF6B35"></span>SDA</span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: UART Setup (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🔌</span>
+                        <h3>UART Setup</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>UART (Universal Asynchronous Receiver-Transmitter) is the most common debugging and communication interface. Here's a complete setup for USART1 on STM32F4 using PA9 (TX) and PA10 (RX).</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">uart_init.c</span>
+                            </div>
+                            <pre><code>void uart_init(uint32_t baud) {
+    // Enable clocks
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+    
+    // PA9=TX, PA10=RX: alternate function mode
+    GPIOA->MODER &amp;= ~((3U &lt;&lt; 18) | (3U &lt;&lt; 20));
+    GPIOA->MODER |=   (2U &lt;&lt; 18) | (2U &lt;&lt; 20);
+    // AF7 = USART1 (AFRH: PA9 bits 7:4, PA10 bits 11:8)
+    GPIOA->AFR[1] &amp;= ~((0xFU &lt;&lt; 4) | (0xFU &lt;&lt; 8));
+    GPIOA->AFR[1] |=   (7U &lt;&lt; 4) | (7U &lt;&lt; 8);
+
+    // Baud: USART1 is on APB2 (PCLK2 = 84 MHz
+    // on a 168 MHz F407), OVER8 = 0, rounded
+    uint32_t pclk2 = 84000000UL;
+    USART1->BRR = (pclk2 + baud / 2) / baud;
+    USART1->CR1 = USART_CR1_TE | USART_CR1_RE
+                | USART_CR1_UE;          // 8N1 default
+}
+
+void uart_send(uint8_t ch) {
+    while (!(USART1->SR &amp; USART_SR_TXE));
+    USART1->DR = ch;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Protocol Comparison (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3>Protocol Comparison</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Choosing the right protocol depends on speed, wire count, and topology requirements.</p>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>UART</th>
+                                    <th>SPI</th>
+                                    <th>I2C</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Wires</td>
+                                    <td>2 + GND (TX/RX)</td>
+                                    <td>3 + 1 CS per device + GND</td>
+                                    <td>2 + GND (SDA/SCL, pull-ups)</td>
+                                </tr>
+                                <tr>
+                                    <td>Clock</td>
+                                    <td>None (async, agreed baud)</td>
+                                    <td>Master drives SCK</td>
+                                    <td>Master drives SCL</td>
+                                </tr>
+                                <tr>
+                                    <td>Typical speed</td>
+                                    <td>9.6k–921.6k baud (STM32F4 up to 10.5 Mbit/s)</td>
+                                    <td>1–50 Mbit/s (STM32F4 up to 42 Mbit/s)</td>
+                                    <td>100k / 400k / 1M / 3.4M bit/s (STM32F4: 100k/400k)</td>
+                                </tr>
+                                <tr>
+                                    <td>Topology</td>
+                                    <td>Point-to-point</td>
+                                    <td>Shared bus, one CS per slave</td>
+                                    <td>Multi-drop bus, 7-bit addresses</td>
+                                </tr>
+                                <tr>
+                                    <td>Duplex</td>
+                                    <td>Full</td>
+                                    <td>Full</td>
+                                    <td>Half</td>
+                                </tr>
+                                <tr>
+                                    <td>Acknowledge</td>
+                                    <td>No</td>
+                                    <td>No</td>
+                                    <td>Yes (ACK/NACK per byte)</td>
+                                </tr>
+                                <tr>
+                                    <td>Use Case</td>
+                                    <td>Debug, GPS, BT</td>
+                                    <td>Display, Flash, ADC</td>
+                                    <td>Sensors, EEPROM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Card 6: DMA Transfers -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🚀</span>
+                        <h3>DMA Transfers</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Direct Memory Access (DMA) transfers data between memory and peripherals <strong>without CPU involvement</strong>. Set it up once, fire it, and the CPU is free to do other work.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">dma_uart.c</span>
+                            </div>
+                            <pre><code>// USART1_TX = DMA2 Stream7 Channel4
+RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+
+DMA2_Stream7->CR &amp;= ~DMA_SxCR_EN;
+while (DMA2_Stream7->CR &amp; DMA_SxCR_EN);  // wait off
+DMA2->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7
+            | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7
+            | DMA_HIFCR_CFEIF7;              // clear flags
+
+DMA2_Stream7->PAR  = (uint32_t)&amp;USART1->DR;
+DMA2_Stream7->M0AR = (uint32_t)tx_buffer;
+DMA2_Stream7->NDTR = buffer_len;
+DMA2_Stream7->CR   = DMA_SxCR_CHSEL_2      // channel 4
+                   | DMA_SxCR_MINC         // mem++
+                   | DMA_SxCR_DIR_0        // mem → periph
+                   | DMA_SxCR_TCIE;        // IRQ when done
+
+USART1->CR3 |= USART_CR3_DMAT;   // UART requests DMA
+DMA2_Stream7->CR |= DMA_SxCR_EN; // fire and forget!</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             TIMERS SECTION (08)
+             ================================================= -->
+        <section id="timers" class="content-section">
+            <div class="section-header">
+                <span class="section-number">08</span>
+                <h2 class="section-title">Timers &amp; PWM</h2>
+                <p class="section-subtitle">Precise timing, waveform generation, and event counting</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: Timer Architecture (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🏗️</span>
+                        <h3>Timer Architecture</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>A timer is a hardware counter clocked by its bus timer clock (APB1 or APB2), divided by a prescaler. When the counter reaches the Auto-Reload Register (ARR) value, it generates an update event and restarts from 0. On a 168 MHz STM32F407, APB1 runs at 42 MHz and its timers (TIM2–TIM7) are clocked at 2 × 42 = 84 MHz.</p>
+                        <div class="timer-diagram">
+                            <div class="timer-block clock">Timer Clock (APB1×2)<br>84 MHz</div>
+                            <div class="timer-arrow">÷</div>
+                            <div class="timer-block prescaler">Prescaler ÷(PSC+1)<br>PSC = <span id="timer-psc-display">8399</span></div>
+                            <div class="timer-arrow">→</div>
+                            <div class="timer-block counter">Counter (CNT)<br>10 kHz tick</div>
+                            <div class="timer-arrow">= ARR?</div>
+                            <div class="timer-block event">Update Event<br>/ Interrupt</div>
+                        </div>
+                        <p>Update frequency = Clock / (PSC + 1) / (ARR + 1). For a 1 Hz blink: 84 MHz / (8399 + 1) / (9999 + 1) = 1 Hz. Both registers hold <em>value − 1</em> because the hardware counts from 0.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Interactive PWM Generator (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">📈</span>
+                        <h3>Interactive PWM Generator</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Adjust frequency and duty cycle with the sliders. See the PWM waveform and the register values you'd need to set on an STM32. The prescaler is fixed at 83 so the counter ticks at 84 MHz / 84 = 1 MHz; in PWM mode 1, duty = CCR1 / (ARR + 1).</p>
+                        <div class="viz-container pwm-generator" id="pwm-generator">
+                            <canvas id="pwm-viz-canvas" width="560" height="200"></canvas>
+                            <div class="pwm-controls">
+                                <div class="control-group">
+                                    <label>Frequency: <span id="pwm-freq-display">1000</span> Hz</label>
+                                    <input type="range" id="pwm-freq-slider" min="10" max="5000" value="1000" class="slider">
+                                </div>
+                                <div class="control-group">
+                                    <label>Duty Cycle: <span id="pwm-duty-display">50</span>%</label>
+                                    <input type="range" id="pwm-duty-slider" min="0" max="100" value="50" class="slider">
+                                </div>
+                            </div>
+                            <div class="pwm-registers">
+                                <code>TIM2->PSC = 83;</code>
+                                <code>TIM2->ARR = <span id="pwm-arr-val">999</span>;</code>
+                                <code>TIM2->CCR1 = <span id="pwm-ccr-val">500</span>;</code>
+                                <code>// actual: <span id="pwm-actual-val">1000.0 Hz</span></code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Timer Setup -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">⏱️</span>
+                        <h3>Timer Setup</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Configure TIM2 to generate a 1 Hz interrupt for LED blinking. The prescaler divides the 84 MHz clock, and the ARR sets the period.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">timer_setup.c</span>
+                            </div>
+                            <pre><code>void timer_init(void) {
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    
+    TIM2->PSC = 8399;    // 84MHz/8400 = 10kHz
+    TIM2->ARR = 9999;    // 10kHz/10000 = 1Hz
+    TIM2->EGR = TIM_EGR_UG;      // load PSC now (it's buffered)
+    TIM2->SR  = 0;               // drop the UG flag
+    TIM2->DIER |= TIM_DIER_UIE;  // Enable interrupt
+    TIM2->CR1 |= TIM_CR1_CEN;    // Start!
+
+    NVIC_EnableIRQ(TIM2_IRQn);
+}
+
+void TIM2_IRQHandler(void) {
+    if (TIM2->SR &amp; TIM_SR_UIF) {
+        TIM2->SR = ~TIM_SR_UIF;  // rc_w0: write 0 to clear
+        toggle_led();
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Input Capture -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">📥</span>
+                        <h3>Input Capture</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Input capture mode records the timer counter value when an external signal edge occurs. By measuring the difference between two captures, you can calculate the signal's frequency.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">input_capture.c</span>
+                            </div>
+                            <pre><code>// Measure frequency of external signal
+#define TIMER_CLK_HZ 1000000UL  // TIM3 tick after PSC
+volatile uint16_t captures[2];
+volatile uint8_t  capture_idx = 0;
+volatile float    measured_freq = 0;
+
+void TIM3_IRQHandler(void) {
+    if (TIM3->SR &amp; TIM_SR_CC1IF) {
+        // Reading CCR1 also clears CC1IF
+        captures[capture_idx] = (uint16_t)TIM3->CCR1;
+        if (++capture_idx &gt;= 2) {
+            // 16-bit timer: uint16_t math handles wrap
+            uint16_t period = (uint16_t)(captures[1] - captures[0]);
+            if (period) measured_freq = (float)TIMER_CLK_HZ / period;
+            capture_idx = 0;
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Watchdog Timer (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🐕</span>
+                        <h3>Watchdog Timer</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>A watchdog timer is a safety mechanism that resets the MCU if your software hangs. You must periodically "feed" (reset) the watchdog counter. If you don't — something crashed — the MCU reboots automatically. STM32 has two: IWDG (runs from its own ~32 kHz LSI clock, so it survives a main-clock failure, and cannot be stopped once started) and WWDG (windowed: feeding too early also resets).</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">watchdog.c</span>
+                            </div>
+                            <pre><code>// Independent Watchdog (IWDG)
+// Must be "fed" periodically or MCU resets
+
+void iwdg_init(uint32_t timeout_ms) {
+    // LSI ≈ 32 kHz, /64 → 0.5 kHz → 2 ms per count
+    uint32_t rlr = timeout_ms / 2;
+    if (rlr &gt; 4095) rlr = 4095;   // max ≈ 8.19 s
+
+    IWDG->KR  = 0xCCCC;  // Start watchdog
+    IWDG->KR  = 0x5555;  // Unlock PR/RLR
+    IWDG->PR  = 4;       // Prescaler /64
+    IWDG->RLR = rlr;
+    while (IWDG->SR);    // wait for PVU/RVU to clear
+    IWDG->KR  = 0xAAAA;  // Reload with new value
+}
+
+// Call periodically in main loop:
+void iwdg_feed(void) {
+    IWDG->KR = 0xAAAA;  // Reset counter
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: SysTick -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🕐</span>
+                        <h3>SysTick</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>SysTick is a 24-bit countdown timer built into every ARM Cortex-M core. It's perfect for creating a millisecond tick — the foundation of <code>delay_ms()</code> and RTOS tick sources.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">systick.c</span>
+                            </div>
+                            <pre><code>volatile uint32_t systick_ms = 0;
+
+void SysTick_Handler(void) {
+    systick_ms++;
+}
+
+void delay_ms(uint32_t ms) {
+    uint32_t start = systick_ms;
+    while ((systick_ms - start) &lt; ms);
+}
+
+// In main():
+SysTick_Config(SystemCoreClock / 1000);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             RTOS SECTION (09)
+             ================================================= -->
+        <section id="rtos" class="content-section">
+            <div class="section-header">
+                <span class="section-number">09</span>
+                <h2 class="section-title">RTOS Fundamentals</h2>
+                <p class="section-subtitle">Real-time operating systems for complex embedded applications</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: What is RTOS? (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🔄</span>
+                        <h3>What is RTOS?</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>An RTOS (Real-Time Operating System) provides deterministic, priority-based multitasking for embedded systems. Unlike standard (non-PREEMPT_RT) Linux, an RTOS is designed so that the highest-priority ready task runs within a bounded, predictable time — critical for motor control, medical devices, and industrial automation.</p>
+                        <div class="comparison-grid">
+                            <div class="compare-col">
+                                <h4>🔨 Bare-Metal</h4>
+                                <ul>
+                                    <li>Super loop architecture</li>
+                                    <li>Manual timing via delays</li>
+                                    <li>Interrupt-driven events</li>
+                                    <li>Minimal RAM overhead</li>
+                                </ul>
+                            </div>
+                            <div class="compare-col">
+                                <h4>🔄 RTOS</h4>
+                                <ul>
+                                    <li>Multi-task architecture</li>
+                                    <li>Scheduler-managed timing</li>
+                                    <li>Task synchronization primitives</li>
+                                    <li>~2-10 KB RAM overhead</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Task Scheduler Visualizer (span-2, featured) -->
+                <div class="bento-card bento-card--span-2 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span>
+                        <h3>Task Scheduler Visualizer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Watch a priority-based preemptive scheduler in action. Each task wakes up periodically and needs some CPU time. The <strong>highest-priority ready task always runs</strong> (in FreeRTOS a bigger number means higher priority). A thin faded bar means the task is ready but preempted, waiting its turn.</p>
+                        <div class="viz-container">
+                            <canvas id="rtos-viz-canvas" width="560" height="300"></canvas>
+                            <div class="viz-controls">
+                                <button class="btn btn--primary btn--small" id="rtos-start">▶ Start Scheduler</button>
+                                <button class="btn btn--accent btn--small" id="rtos-add-task">+ Add Task</button>
+                                <button class="btn btn--secondary btn--small" id="rtos-pause">⏸ Pause</button>
+                                <button class="btn btn--secondary btn--small" id="rtos-reset">Reset</button>
+                            </div>
+                            <div class="rtos-task-list" id="rtos-task-list">
+                                <div class="rtos-task-info" style="--task-color:#FF6B35">Task 1: LED Blink (Priority: 1, runs 5 every 20 ticks)</div>
+                                <div class="rtos-task-info" style="--task-color:#00F5D4">Task 2: Sensor Read (Priority: 2, runs 4 every 15 ticks)</div>
+                                <div class="rtos-task-info" style="--task-color:#FFE66D">Task 3: UART TX (Priority: 3, runs 8 every 30 ticks)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Task Creation -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">➕</span>
+                        <h3>Task Creation</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
+                    </div>
+                    <div class="card-content">
+                        <p>FreeRTOS tasks are infinite loops with <code>vTaskDelay()</code> calls. Each task gets its own stack. The scheduler switches between them based on priority.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">freertos_tasks.c</span>
+                            </div>
+                            <pre><code>QueueHandle_t dataQueue;
+
+void TaskBlink(void *params) {
+    while (1) {
+        GPIOA->ODR ^= (1U &lt;&lt; 5);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+void TaskSensor(void *params) {
+    while (1) {
+        uint16_t val = adc_read();
+        xQueueSend(dataQueue, &amp;val, 0);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+int main(void) {
+    dataQueue = xQueueCreate(10, sizeof(uint16_t));
+    // stack depth is in WORDS (128 words = 512 bytes)
+    // higher number = higher priority
+    xTaskCreate(TaskBlink,  "Blink",  128, NULL, 1, NULL);
+    xTaskCreate(TaskSensor, "Sensor", 256, NULL, 2, NULL);
+    vTaskStartScheduler();
+    for (;;);  // only reached if the heap ran out
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Semaphores & Mutexes -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔐</span>
+                        <h3>Semaphores &amp; Mutexes</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>When multiple tasks share a resource (SPI bus, UART, shared buffer), use a mutex to ensure exclusive access. Only one task can "take" the mutex at a time — others block until it's "given" back.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">mutex_example.c</span>
+                            </div>
+                            <pre><code>SemaphoreHandle_t spi_mutex;
+// in main(), before the scheduler starts:
+// spi_mutex = xSemaphoreCreateMutex();
+
+void TaskA(void *p) {
+    while (1) {
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);
+        spi_transfer(sensor_a_data);
+        xSemaphoreGive(spi_mutex);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void TaskB(void *p) {
+    while (1) {
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);
+        spi_transfer(sensor_b_data);
+        xSemaphoreGive(spi_mutex);
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Message Queues (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">📬</span>
+                        <h3>Message Queues</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Queues are the safest way to pass data between tasks. The producer pushes data, the consumer pops it — thread-safe, no shared variables needed.</p>
+                        <div class="queue-visual">
+                            <div class="queue-producer">Producer Task →</div>
+                            <div class="queue-items">
+                                <span class="queue-item">42</span>
+                                <span class="queue-item">37</span>
+                                <span class="queue-item">19</span>
+                            </div>
+                            <div class="queue-consumer">→ Consumer Task</div>
+                        </div>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">queue_example.c</span>
+                            </div>
+                            <pre><code>QueueHandle_t dataQueue;
+
+dataQueue = xQueueCreate(10, sizeof(uint16_t));
+
+// Producer:
+uint16_t reading = adc_read();
+xQueueSend(dataQueue, &amp;reading, portMAX_DELAY);
+
+// Consumer:
+uint16_t received;
+xQueueReceive(dataQueue, &amp;received, portMAX_DELAY);
+process_data(received);</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Priority Inversion -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">⚠️</span>
+                        <h3>Priority Inversion</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Priority inversion occurs when a high-priority task is blocked waiting for a mutex held by a low-priority task, while a medium-priority task runs instead. This was famously responsible for the Mars Pathfinder bug in 1997!</p>
+                        <div class="priority-visual">
+                            <div class="pri-task high">High Priority 🔴 — BLOCKED waiting for mutex</div>
+                            <div class="pri-task medium">Medium Priority 🟡 — Running (preempts Low!)</div>
+                            <div class="pri-task low">Low Priority 🟢 — Holds mutex, can't run</div>
+                        </div>
+                        <p><strong>Solution:</strong> Priority Inheritance — temporarily boost Low to High's priority so it can finish and release the mutex. FreeRTOS mutexes (<code>xSemaphoreCreateMutex</code>) do this automatically; binary semaphores do not.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             LINUX PREVIEW SECTION (10)
+             ================================================= -->
+        <section id="linux-preview" class="content-section linux-section">
+            <div class="section-header">
+                <span class="section-number">10</span>
+                <h2 class="section-title">Coming Next: Embedded Linux</h2>
+                <p class="section-subtitle">The next chapter in your embedded systems journey</p>
+            </div>
+            <div class="bento-grid">
+
+                <!-- Card 1: From Bare-Metal to Linux (span-3) -->
+                <div class="bento-card bento-card--span-3">
+                    <div class="card-header">
+                        <span class="card-icon">🐧</span>
+                        <h3>From Bare-Metal to Linux</h3>
+                        <span class="tag tag--coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="card-content">
+                        <p>You've mastered bare-metal embedded C. Now it's time to step into the world of Embedded Linux — where your hardware gains a full operating system, networking stack, filesystem, and thousands of ready-to-use packages. The skills you've learned — registers, memory management, interrupts — all translate directly into understanding Linux device drivers and kernel internals.</p>
+                        <div class="transition-visual">
+                            <div class="transition-from">
+                                <h4>Bare-Metal (You Are Here)</h4>
+                                <ul>
+                                    <li>✅ Direct register access</li>
+                                    <li>✅ Microsecond timing</li>
+                                    <li>✅ Minimal resources</li>
+                                </ul>
+                            </div>
+                            <div class="transition-arrow">→</div>
+                            <div class="transition-to">
+                                <h4>Embedded Linux (Coming Soon)</h4>
+                                <ul>
+                                    <li>🔜 Kernel &amp; userspace</li>
+                                    <li>🔜 Device drivers</li>
+                                    <li>🔜 Networking &amp; filesystems</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Linux Kernel -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🧠</span>
+                        <h3>Linux Kernel</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="coming-soon-badge">🔜 Coming Soon</span>
+                        <p>Dive deep into the Linux kernel architecture: monolithic design, loadable kernel modules (LKMs), system calls, process scheduling, and memory management. Learn how the kernel abstracts hardware for userspace applications.</p>
+                        <p>Topics include: kernel configuration, cross-compilation, boot sequence (U-Boot → Kernel → Init), and kernel debugging with KGDB.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Device Drivers -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔌</span>
+                        <h3>Device Drivers</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="coming-soon-badge">🔜 Coming Soon</span>
+                        <p>Learn to write Linux device drivers — the bridge between hardware and userspace. Cover character devices, platform drivers, the device model, sysfs, and ioctl interfaces. Your bare-metal register knowledge translates directly here!</p>
+                        <p>Topics include: <code>file_operations</code>, <code>probe/remove</code> lifecycle, IRQ handling in kernel space, and DMA in Linux.</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Device Trees -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🌳</span>
+                        <h3>Device Trees</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="coming-soon-badge">🔜 Coming Soon</span>
+                        <p>Device Trees describe hardware in a structured format, replacing hard-coded board files. The kernel reads the compiled <code>.dtb</code> file at boot to discover peripherals, pin muxing, and memory regions.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">board.dts</span>
+                            </div>
+                            <pre><code>#include &lt;dt-bindings/gpio/gpio.h&gt;
+
+/ {
+    leds {
+        compatible = "gpio-leds";
+        status-led {
+            gpios = &lt;&amp;gpio0 5 GPIO_ACTIVE_HIGH&gt;;
+            label = "status";
+        };
+    };
+};</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Build Systems -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🏭</span>
+                        <h3>Build Systems</h3>
+                        <span class="tag tag--advanced">Advanced</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="coming-soon-badge">🔜 Coming Soon</span>
+                        <p><strong>Yocto Project</strong> is an industry-standard framework for creating custom Linux distributions for embedded devices. It's powerful but has a steep learning curve. <strong>Buildroot</strong> is a simpler alternative that generates a complete rootfs, kernel, and bootloader — configured with <code>make menuconfig</code> and built with a single <code>make</code>. We'll cover both.</p>
+                        <p>Topics include: layers, recipes, BitBake, cross-toolchains, and SDK generation.</p>
+                    </div>
+                </div>
+
+                <!-- Card 6: Linux Roadmap (span-2) -->
+                <div class="bento-card bento-card--span-2">
+                    <div class="card-header">
+                        <span class="card-icon">🗺️</span>
+                        <h3>Linux Roadmap</h3>
+                        <span class="tag tag--coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Here's what's coming in the Embedded Linux curriculum:</p>
+                        <div class="linux-roadmap">
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Linux Kernel Architecture</span>
+                            </div>
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Writing Device Drivers</span>
+                            </div>
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Device Tree Configuration</span>
+                            </div>
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Cross-Compilation &amp; Toolchains</span>
+                            </div>
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Yocto Project &amp; Buildroot</span>
+                            </div>
+                            <div class="linux-module upcoming">
+                                <span class="module-status">🔜</span>
+                                <span>Networking &amp; IPC</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <p>⚡ EmbeddedC Academy — Learn Embedded Systems Programming</p>
+                <p>Built with passion for the embedded community</p>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
