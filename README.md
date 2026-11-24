@@ -2,7 +2,9 @@
 
 Interactive Embedded C course site — from bare-metal fundamentals to RTOS — with visualizations and hands-on labs aimed at STM32 / ARM Cortex-M.
 
-**Live locally:** open `index.html`, or serve the folder with any static file server.
+**Live site:** [https://embeddedc-academy.web.app](https://embeddedc-academy.web.app)
+
+**Locally:** open `index.html`, or serve the folder with any static file server.
 
 ## Features
 

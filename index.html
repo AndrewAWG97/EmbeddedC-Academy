@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 
     <!-- Favicon: inline SVG circuit/chip icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='16' y='16' width='32' height='32' rx='4' fill='%23FF6B35' stroke='%23222' stroke-width='2'/%3E%3Crect x='22' y='22' width='20' height='20' rx='2' fill='%23222'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-size='12' font-family='monospace' fill='%2300F5D4'%3EC%3C/text%3E%3Cline x1='20' y1='8' x2='20' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='28' y1='8' x2='28' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='36' y1='8' x2='36' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='44' y1='8' x2='44' y2='16' stroke='%23222' stroke-width='2'/%3E%3Cline x1='20' y1='48' x2='20' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='28' y1='48' x2='28' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='36' y1='48' x2='36' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='44' y1='48' x2='44' y2='56' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='20' x2='16' y2='20' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='28' x2='16' y2='28' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='36' x2='16' y2='36' stroke='%23222' stroke-width='2'/%3E%3Cline x1='8' y1='44' x2='16' y2='44' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='20' x2='56' y2='20' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='28' x2='56' y2='28' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='36' x2='56' y2='36' stroke='%23222' stroke-width='2'/%3E%3Cline x1='48' y1='44' x2='56' y2='44' stroke='%23222' stroke-width='2'/%3E%3C/svg%3E">
@@ -809,7 +809,12 @@ REG = tmp;</code></pre>
                         <span class="tag tag--beginner">Beginner</span>
                     </div>
                     <div class="card-content">
-                        <p>A pointer is a variable that stores the <strong>memory address</strong> of another variable. In embedded C, pointers are your primary tool for accessing hardware registers and manipulating memory directly.</p>
+                        <p>A pointer is a variable that stores the <strong>memory address</strong> of another object. In embedded C it is your primary tool for reaching hardware registers, buffers, and callbacks. A pointer is itself just a number in memory — on a 32-bit Cortex-M, <code>sizeof(any_ptr) == 4</code>.</p>
+                        <ul class="ptr-fact-list">
+                            <li><code>&amp;x</code> — <strong>address-of</strong>: "where does <code>x</code> live?" (gives a pointer).</li>
+                            <li><code>*p</code> — <strong>dereference</strong>: "go to the address in <code>p</code> and read/write what's there".</li>
+                            <li>The <strong>type</strong> (<code>int32_t *</code>) tells the compiler how many bytes to access and how far <code>p + 1</code> moves.</li>
+                        </ul>
                         <div class="pointer-visual">
                             <div class="ptr-var-box">
                                 <span class="ptr-label">sensor_reading</span>
@@ -835,6 +840,125 @@ int32_t *ptr = &amp;sensor_reading;
 
 printf("Value: %ld\n", (long)*ptr); // 100
 printf("Address: %p\n", (void*)ptr); // 0x20000004</code></pre>
+                        </div>
+                        <div class="ptr-rule">
+                            <strong>A dereference <code>*p</code> is safe only if all three hold:</strong>
+                            <ol>
+                                <li><code>p</code> holds the address of a real object (not NULL, not garbage).</li>
+                                <li>That object is still <strong>alive</strong> (not freed, not an expired local).</li>
+                                <li>The pointer's <strong>type and alignment</strong> match what's stored there.</li>
+                            </ol>
+                            Every pointer bug below breaks one of these rules.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Declaration Decoder -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔎</span>
+                        <h3>Reading Declarations</h3>
+                        <span class="tag tag--beginner">Beginner</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Start at the name and read <strong>right-to-left</strong> (parentheses first). <code>*</code> reads as "pointer to".</p>
+                        <dl class="ptr-decl-list">
+                            <dt><code>int32_t *p</code></dt><dd>p is a pointer to int32_t</dd>
+                            <dt><code>int32_t **pp</code></dt><dd>pp is a pointer to a pointer to int32_t</dd>
+                            <dt><code>const uint8_t *p</code></dt><dd>pointer to <em>read-only</em> data — <code>*p = x</code> is an error, <code>p++</code> is fine</dd>
+                            <dt><code>uint8_t *const p</code></dt><dd><em>constant pointer</em> — can't re-aim <code>p</code>, can write <code>*p</code></dd>
+                            <dt><code>volatile uint32_t *reg</code></dt><dd>pointer to a value that can change behind the compiler's back (hardware)</dd>
+                            <dt><code>int32_t *arr[4]</code></dt><dd>array of 4 pointers to int32_t</dd>
+                            <dt><code>int32_t (*pa)[4]</code></dt><dd>pointer to an array of 4 int32_t</dd>
+                            <dt><code>void (*fp)(void)</code></dt><dd>pointer to a function taking nothing, returning nothing</dd>
+                            <dt><code>void *p</code></dt><dd>generic address — must be cast before dereferencing</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Card 3: Pointer State Explorer (span-3, featured) -->
+                <div class="bento-card bento-card--span-3 bento-card--featured">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span>
+                        <h3>Pointer State Explorer</h3>
+                        <span class="tag tag--interactive">Interactive</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Pick a scenario, then step through the code line by line. The memory map shows every variable with its address and value; arrows show where each pointer aims — <strong>green</strong> is a valid target, <strong>yellow dashed</strong> is legal-but-careful, <strong>red dashed</strong> is undefined behavior.</p>
+                        <div class="ptr-explorer" id="ptr-explorer" tabindex="0" aria-label="Pointer state explorer. Use left and right arrow keys to step.">
+                            <div class="ptr-scenarios" id="ptr-scenarios" role="group" aria-label="Pointer scenarios"></div>
+
+                            <div class="ptr-head">
+                                <h4 class="ptr-title" id="ptr-title"></h4>
+                                <span class="ptr-badge" id="ptr-badge"></span>
+                            </div>
+                            <p class="ptr-summary" id="ptr-summary"></p>
+
+                            <div class="ptr-stage">
+                                <div class="ptr-stage-left">
+                                    <div class="code-block">
+                                        <div class="code-header">
+                                            <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                            <span class="code-filename">scenario.c</span>
+                                        </div>
+                                        <div class="ptr-code" id="ptr-code" aria-live="polite"></div>
+                                    </div>
+                                    <div class="ptr-controls">
+                                        <button type="button" class="btn btn--secondary btn--small" id="ptr-prev">← Prev</button>
+                                        <button type="button" class="btn btn--primary btn--small" id="ptr-next">Next Step →</button>
+                                        <button type="button" class="btn btn--secondary btn--small" id="ptr-restart">↺ Restart</button>
+                                    </div>
+                                    <div class="ptr-counter-row">
+                                        <span class="ptr-counter" id="ptr-counter"></span>
+                                        <div class="proto-step-progress"><span id="ptr-progress"></span></div>
+                                    </div>
+                                </div>
+                                <div class="ptr-stage-right">
+                                    <canvas id="ptr-mem-canvas" width="560" height="320" aria-label="Memory map for the current step"></canvas>
+                                    <div class="uart-legend ptr-legend">
+                                        <span class="legend-item"><span class="legend-color" style="background:#1D4ED8"></span>Variable</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#6D28D9"></span>Pointer</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#0E7490"></span>Flash data</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#065F46"></span>Function code</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#B45309"></span>Register</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#374151"></span>Freed / dead</span>
+                                        <span class="legend-item"><span class="legend-color" style="background:#B91C1C"></span>Corrupted</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="proto-step-meta ptr-explain" id="ptr-explain" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Pointer States at a Glance (span-3) -->
+                <div class="bento-card bento-card--span-3">
+                    <div class="card-header">
+                        <span class="card-icon">📋</span>
+                        <h3>Every Pointer State at a Glance</h3>
+                        <span class="tag tag--intermediate">Reference</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-scroll">
+                            <table class="data-table ptr-state-table">
+                                <thead>
+                                    <tr><th>State</th><th>What it holds</th><th>Can you dereference?</th><th>Typical cause</th><th>How to prevent / detect</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><span class="ptr-pill ptr-pill--ok">Valid</span></td><td>Address of a live object of the right type</td><td>✅ Yes</td><td><code>p = &amp;x;</code>, <code>p = arr;</code></td><td>Keep the object's lifetime longer than the pointer's</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--warn">NULL</span></td><td><code>0</code> — "points nowhere" on purpose</td><td>❌ No (UB; on Cortex-M address 0 may even be readable!)</td><td>Not yet assigned, lookup failed, end of list</td><td>Initialize to NULL, check <code>if (p != NULL)</code> before use</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Wild</span></td><td>Garbage — whatever was on the stack</td><td>❌ No</td><td>Local pointer declared without initializer</td><td>Always initialize; enable <code>-Wall -Wuninitialized</code></td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Dangling (freed)</span></td><td>Address of heap memory already released</td><td>❌ No (block may be reused)</td><td>Use after <code>free()</code>, double free</td><td><code>free(p); p = NULL;</code> — or avoid heap, use static pools</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Dangling (scope)</span></td><td>Address of a local whose function returned</td><td>❌ No (stack frame reused)</td><td>Returning <code>&amp;local</code>, storing a local's address in a global</td><td>Return by value, use <code>static</code>, or let the caller pass a buffer</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--warn">One-past-the-end</span></td><td><code>&amp;arr[N]</code> — just after the array</td><td>⚠️ Compare only, never dereference</td><td>Loop end markers: <code>for (p = arr; p &lt; arr + N; p++)</code></td><td>Use it only as a boundary in comparisons</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Out of bounds</span></td><td>Address past/before the object</td><td>❌ No — silently corrupts neighbors</td><td>Off-by-one, missing length checks</td><td>Pass lengths, check indices, use <code>sizeof(arr)/sizeof(arr[0])</code></td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Misaligned</span></td><td>Odd address used as <code>uint32_t*</code></td><td>❌ No — UsageFault on M0 / LDRD, LDM</td><td>Casting a byte buffer to a wider type</td><td><code>memcpy()</code> into a local, or build values from bytes</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">Wrong type</span></td><td>Valid address viewed through an unrelated type</td><td>❌ No (strict aliasing UB)</td><td><code>*(float*)&amp;u32</code> type punning</td><td><code>memcpy()</code> or a <code>union</code>; <code>char*</code> may alias anything</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--bad">NULL function ptr</span></td><td><code>0</code> in a callback slot</td><td>❌ No — call jumps to 0 → HardFault</td><td>Unregistered callback</td><td>Check before calling, or install a default no-op handler</td></tr>
+                                    <tr><td><span class="ptr-pill ptr-pill--info">void *</span></td><td>An untyped address</td><td>⚠️ Only after casting to the real type</td><td><code>memcpy</code>, <code>malloc</code>, generic callbacks</td><td>Cast back to exactly the type that was stored</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -896,36 +1020,6 @@ actions[state]();</code></pre>
                     </div>
                 </div>
 
-                <!-- Card 4: Memory-Mapped I/O (span-2) -->
-                <div class="bento-card bento-card--span-2">
-                    <div class="card-header">
-                        <span class="card-icon">🔌</span>
-                        <h3>Memory-Mapped I/O</h3>
-                        <span class="tag tag--intermediate">Intermediate</span>
-                    </div>
-                    <div class="card-content">
-                        <p>This is THE most important concept in embedded C. Hardware peripherals (GPIO, UART, SPI, etc.) have <strong>control registers at fixed memory addresses</strong>. By writing to those addresses with pointers, you directly control the hardware. There's no OS, no abstraction layer — just you and the silicon.</p>
-                        <div class="code-block">
-                            <div class="code-header">
-                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-                                <span class="code-filename">mmio.c</span>
-                            </div>
-                            <pre><code>// Direct register access
-#define GPIOA_BASE  0x40020000
-#define GPIOA_MODER (*(volatile uint32_t*)(GPIOA_BASE + 0x00))
-#define GPIOA_ODR   (*(volatile uint32_t*)(GPIOA_BASE + 0x14))
-
-#define RCC_AHB1ENR (*(volatile uint32_t*)0x40023830)
-
-// Now use like variables!
-RCC_AHB1ENR |= (1U &lt;&lt; 0);       // GPIOA clock on
-GPIOA_MODER &amp;= ~(3U &lt;&lt; 10);     // clear MODER5
-GPIOA_MODER |=  (1U &lt;&lt; 10);     // PA5 output
-GPIOA_ODR   |=  (1U &lt;&lt; 5);      // PA5 high</code></pre>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Card 5: Struct Overlay -->
                 <div class="bento-card">
                     <div class="card-header">
@@ -956,24 +1050,55 @@ GPIOA->ODR |= (1U &lt;&lt; 5);</code></pre>
                     </div>
                 </div>
 
-                <!-- Card 6: Interactive Pointer Visualizer (span-2, featured) -->
-                <div class="bento-card bento-card--span-2 bento-card--featured">
+                <!-- Card 4: Memory-Mapped I/O (span-2) -->
+                <div class="bento-card bento-card--span-2">
                     <div class="card-header">
-                        <span class="card-icon">🧪</span>
-                        <h3>Interactive Pointer Visualizer</h3>
-                        <span class="tag tag--interactive">Interactive</span>
+                        <span class="card-icon">🔌</span>
+                        <h3>Memory-Mapped I/O</h3>
+                        <span class="tag tag--intermediate">Intermediate</span>
                     </div>
                     <div class="card-content">
-                        <p>Create variables and pointers, then dereference them to see how pointers navigate memory.</p>
-                        <div class="viz-container">
-                            <canvas id="pointer-viz-canvas" width="560" height="280"></canvas>
-                            <div class="viz-controls">
-                                <button class="btn btn--primary btn--small" id="ptr-create-var">Create Variable</button>
-                                <button class="btn btn--accent btn--small" id="ptr-create-ptr">Create Pointer</button>
-                                <button class="btn btn--secondary btn--small" id="ptr-deref">Dereference</button>
-                                <button class="btn btn--secondary btn--small" id="ptr-reset">Reset</button>
+                        <p>This is THE most important concept in embedded C. Hardware peripherals (GPIO, UART, SPI, etc.) have <strong>control registers at fixed memory addresses</strong>. By writing to those addresses with pointers, you directly control the hardware. There's no OS, no abstraction layer — just you and the silicon.</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                                <span class="code-filename">mmio.c</span>
                             </div>
+                            <pre><code>// Direct register access
+#define GPIOA_BASE  0x40020000
+#define GPIOA_MODER (*(volatile uint32_t*)(GPIOA_BASE + 0x00))
+#define GPIOA_ODR   (*(volatile uint32_t*)(GPIOA_BASE + 0x14))
+
+#define RCC_AHB1ENR (*(volatile uint32_t*)0x40023830)
+
+// Now use like variables!
+RCC_AHB1ENR |= (1U &lt;&lt; 0);       // GPIOA clock on
+GPIOA_MODER &amp;= ~(3U &lt;&lt; 10);     // clear MODER5
+GPIOA_MODER |=  (1U &lt;&lt; 10);     // PA5 output
+GPIOA_ODR   |=  (1U &lt;&lt; 5);      // PA5 high</code></pre>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Card: Pointer Safety Checklist -->
+                <div class="bento-card">
+                    <div class="card-header">
+                        <span class="card-icon">🛡️</span>
+                        <h3>Pointer Safety Checklist</h3>
+                        <span class="tag tag--advanced">Best Practice</span>
+                    </div>
+                    <div class="card-content">
+                        <ul class="ptr-checklist">
+                            <li><strong>Initialize every pointer</strong> — to a real address or <code>NULL</code>. Never leave one wild.</li>
+                            <li><strong>Check before dereferencing</strong> anything that can be NULL (lookups, callbacks, optional args).</li>
+                            <li><strong>Set to NULL after <code>free()</code></strong> — better: avoid the heap on MCUs, use static pools.</li>
+                            <li><strong>Never return <code>&amp;local</code></strong> — return by value or let the caller pass a buffer.</li>
+                            <li><strong>Pass a length with every buffer</strong> and check indices against it.</li>
+                            <li><strong>Use <code>const</code></strong> for data you only read; flash tables stay in flash.</li>
+                            <li><strong>Use <code>volatile</code></strong> for every register and every variable shared with an ISR.</li>
+                            <li><strong>Don't cast byte buffers to wider types</strong> — <code>memcpy()</code> handles alignment and aliasing.</li>
+                            <li>Turn on <code>-Wall -Wextra</code>, enable the MPU, and catch faults in <code>HardFault_Handler</code>.</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -2423,6 +2548,6 @@ process_data(received);</code></pre>
     </main>
 
     <!-- JavaScript -->
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

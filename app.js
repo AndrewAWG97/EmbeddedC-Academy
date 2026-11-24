@@ -541,172 +541,1238 @@ function initMemoryViz() {
 }
 
 // ---------------------------------------------------------------------------
-// POINTER VISUALIZER  (Canvas — pointers section)
+// POINTER STATE EXPLORER  (pointers section)
+// Each scenario is a list of steps: highlighted code line(s), the memory
+// picture after that line runs, pointer arrows, and the explanation.
 // ---------------------------------------------------------------------------
-function initPointerViz() {
-    const canvas = document.getElementById('pointer-viz-canvas');
-    if (!canvas) return;
+const PTR_KIND_STYLE = {
+    var:     { fill: '#1D4ED8', text: '#FFFFFF' },
+    ptr:     { fill: '#6D28D9', text: '#FFFFFF' },
+    flash:   { fill: '#0E7490', text: '#FFFFFF' },
+    code:    { fill: '#065F46', text: '#FFFFFF' },
+    reg:     { fill: '#B45309', text: '#FFFFFF' },
+    freed:   { fill: '#374151', text: '#C9CED6', hatch: true },
+    dead:    { fill: '#374151', text: '#C9CED6', hatch: true },
+    corrupt: { fill: '#B91C1C', text: '#FFFFFF' },
+};
 
-    let variables = [];
-    let pointers  = [];
+const PTR_ARROW_COLOR = { ok: '#22C55E', warn: '#FFE66D', bad: '#EF4444' };
 
-    const varNames = ['x', 'y', 'z', 'w', 'v'];
-    const ptrNames = ['ptr1', 'ptr2', 'ptr3'];
+const PTR_STATUS = {
+    ok:   { label: '✓ Safe',                cls: 'ok' },
+    warn: { label: '⚠ Careful',             cls: 'warn' },
+    bad:  { label: '✗ Undefined behavior',  cls: 'bad' },
+    info: { label: 'ℹ Concept',             cls: 'info' },
+};
 
-    function draw() {
-        const { ctx, W, H } = syncCanvasSize(canvas);
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        ctx.fillStyle = isDark ? '#0D1117' : '#1E1E2E';
-        ctx.fillRect(0, 0, W, H);
+function buildPointerScenarios() {
+    // c(region, id, address, name, value, kind, extra) → one memory row
+    const c = (region, id, addr, name, value, kind = 'var', extra = {}) => ({ region, id, addr, name, value, kind, ...extra });
+    // a(fromId, toId, kind, label) → one pointer arrow
+    const a = (from, to, kind = 'ok', label = '') => ({ from, to, kind, label });
 
-        const cellW  = Math.max(52, Math.min(80, (W - 40) / 5 - 20));
-        const cellH  = 50;
-        const startX = 20;
-        const startY = 40;
+    return [
+        // =================================================================
+        // BASICS
+        // =================================================================
+        {
+            id: 'valid', group: 'Basics', state: 'valid',
+            title: 'Valid pointer',
+            summary: 'The healthy state: the pointer holds the address of a live object of the right type. Learn & (address-of) and * (dereference).',
+            code: [
+                'int32_t x = 42;',
+                'int32_t *p = &x;      // & = "address of"',
+                '*p = 100;             // * = "object p points to"',
+                'int32_t y = *p;',
+            ],
+            steps: [
+                {
+                    line: 0, status: 'info',
+                    mem: [c('Stack (main)', 'x', '0x2001FFF8', 'x', '42', 'var', { hl: true })],
+                    arrows: [],
+                    what: 'The compiler reserves 4 bytes on the stack for x and stores 42 there. x lives at address 0x2001FFF8.',
+                    why: 'Every variable has two properties: its VALUE (42) and its ADDRESS (where it lives). Pointers work with the address.',
+                    deref: 'No pointer exists yet.',
+                    tip: 'On STM32 the stack grows down from the top of SRAM (0x20020000), so local variables get addresses just below it.',
+                },
+                {
+                    line: 1, status: 'ok',
+                    mem: [
+                        c('Stack (main)', 'x', '0x2001FFF8', 'x', '42'),
+                        c('Stack (main)', 'p', '0x2001FFF4', 'p', '0x2001FFF8', 'ptr', { hl: true, note: 'int32_t *' }),
+                    ],
+                    arrows: [a('p', 'x')],
+                    what: '&x means "the address of x". p is a new 4-byte variable whose value is 0x2001FFF8 — the address of x. We say "p points to x".',
+                    why: 'The * in the declaration int32_t *p makes p a pointer to int32_t. The pointed-to type tells the compiler how many bytes *p reads or writes (4). The pointer itself is always 4 bytes on 32-bit Cortex-M.',
+                    deref: '*p reads 4 bytes at 0x2001FFF8 → 42. Safe.',
+                    tip: 'p has its own address too (0x2001FFF4). A pointer is just a variable that happens to store an address.',
+                },
+                {
+                    line: 2, status: 'ok',
+                    mem: [
+                        c('Stack (main)', 'x', '0x2001FFF8', 'x', '100', 'var', { hl: true }),
+                        c('Stack (main)', 'p', '0x2001FFF4', 'p', '0x2001FFF8', 'ptr', { note: 'int32_t *' }),
+                    ],
+                    arrows: [a('p', 'x')],
+                    what: '*p on the LEFT of = means "the object p points to". *p = 100 stores 100 at 0x2001FFF8, so x becomes 100 without ever naming x.',
+                    why: 'This is how functions modify the caller\'s variables, how drivers fill buffers, and how firmware writes hardware registers.',
+                    deref: 'Write of 4 bytes to 0x2001FFF8. Valid: x is alive and the type matches.',
+                    tip: 'The symbol * has two jobs. In a declaration it creates a pointer type; in an expression it dereferences.',
+                },
+                {
+                    line: 3, status: 'ok',
+                    mem: [
+                        c('Stack (main)', 'x', '0x2001FFF8', 'x', '100'),
+                        c('Stack (main)', 'p', '0x2001FFF4', 'p', '0x2001FFF8', 'ptr', { note: 'int32_t *' }),
+                        c('Stack (main)', 'y', '0x2001FFF0', 'y', '100', 'var', { hl: true }),
+                    ],
+                    arrows: [a('p', 'x')],
+                    what: '*p on the RIGHT side reads through the pointer: y receives a copy of the value at 0x2001FFF8 (100).',
+                    why: 'Every access through a pointer is a two-step trip: fetch the address stored in p, then access memory at that address.',
+                    deref: 'Valid read → 100.',
+                    tip: 'This is the VALID state. A dereference is safe only when (1) the pointer holds the address of an object, (2) that object is still alive, and (3) the type and alignment match. Every other scenario here breaks one of these three rules.',
+                },
+            ],
+        },
+        {
+            id: 'swap', group: 'Basics', state: 'valid',
+            title: 'Pass by pointer',
+            summary: 'C passes arguments by value. Passing addresses lets a function modify the caller\'s variables (output parameters).',
+            code: [
+                'void swap(int32_t *a, int32_t *b) {',
+                '    int32_t t = *a;',
+                '    *a = *b;',
+                '    *b = t;',
+                '}',
+                '',
+                'int32_t x = 1, y = 2;',
+                'swap(&x, &y);',
+            ],
+            steps: (() => {
+                const S = 'Stack (main)';
+                const R = 'swap() — arguments in registers';
+                return [
+                    {
+                        line: 6, status: 'info',
+                        mem: [c(S, 'x', '0x2001FFF8', 'x', '1', 'var', { hl: true }), c(S, 'y', '0x2001FFF4', 'y', '2', 'var', { hl: true })],
+                        arrows: [],
+                        what: 'x = 1 and y = 2 live in main()\'s stack frame.',
+                        why: 'C passes arguments BY VALUE: a function always receives copies. swap(x, y) could only swap its copies, so x and y would never change.',
+                        deref: 'No pointers yet.',
+                        tip: 'To let a function change your variable, give it the variable\'s address.',
+                    },
+                    {
+                        line: 7, status: 'ok',
+                        mem: [
+                            c(S, 'x', '0x2001FFF8', 'x', '1'), c(S, 'y', '0x2001FFF4', 'y', '2'),
+                            c(R, 'a', 'R0', 'a', '0x2001FFF8', 'ptr', { hl: true, note: '= &x' }),
+                            c(R, 'b', 'R1', 'b', '0x2001FFF4', 'ptr', { hl: true, note: '= &y' }),
+                        ],
+                        arrows: [a('a', 'x'), a('b', 'y')],
+                        what: 'swap(&x, &y) passes two addresses. The ARM calling convention (AAPCS) puts the first four arguments in registers R0–R3, so a = R0 = &x and b = R1 = &y.',
+                        why: 'The addresses are still copied (by value), but a copy of an address points to the same object — so swap() can reach the caller\'s x and y.',
+                        deref: '*a is x, *b is y. Both valid.',
+                        tip: 'This is how C functions "return" more than one result: int read_sensor(int16_t *out_temp, int16_t *out_hum).',
+                    },
+                    {
+                        line: 1, status: 'ok',
+                        mem: [
+                            c(S, 'x', '0x2001FFF8', 'x', '1'), c(S, 'y', '0x2001FFF4', 'y', '2'),
+                            c(R, 'a', 'R0', 'a', '0x2001FFF8', 'ptr', { note: '= &x' }),
+                            c(R, 'b', 'R1', 'b', '0x2001FFF4', 'ptr', { note: '= &y' }),
+                            c(R, 't', 'R2', 't', '1', 'var', { hl: true }),
+                        ],
+                        arrows: [a('a', 'x'), a('b', 'y')],
+                        what: 't = *a follows a to x and copies its value (1) into t.',
+                        why: 'We need a temporary, otherwise the next line would overwrite x before we saved it.',
+                        deref: 'Read through a → 1.',
+                    },
+                    {
+                        line: 2, status: 'ok',
+                        mem: [
+                            c(S, 'x', '0x2001FFF8', 'x', '2', 'var', { hl: true }), c(S, 'y', '0x2001FFF4', 'y', '2'),
+                            c(R, 'a', 'R0', 'a', '0x2001FFF8', 'ptr', { note: '= &x' }),
+                            c(R, 'b', 'R1', 'b', '0x2001FFF4', 'ptr', { note: '= &y' }),
+                            c(R, 't', 'R2', 't', '1'),
+                        ],
+                        arrows: [a('a', 'x'), a('b', 'y')],
+                        what: '*a = *b reads y (through b) and writes it into x (through a). x is now 2.',
+                        why: 'swap() modified main()\'s variable directly — it never knew the name x, only its address.',
+                        deref: 'Read through b, write through a. Both valid.',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [
+                            c(S, 'x', '0x2001FFF8', 'x', '2'), c(S, 'y', '0x2001FFF4', 'y', '1', 'var', { hl: true }),
+                            c(R, 'a', 'R0', 'a', '0x2001FFF8', 'ptr', { note: '= &x' }),
+                            c(R, 'b', 'R1', 'b', '0x2001FFF4', 'ptr', { note: '= &y' }),
+                            c(R, 't', 'R2', 't', '1'),
+                        ],
+                        arrows: [a('a', 'x'), a('b', 'y')],
+                        what: '*b = t writes the saved 1 into y. x and y are swapped.',
+                        why: 'Two writes through two pointers changed two variables in another function\'s frame.',
+                        deref: 'Write through b. Valid.',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [
+                            c(S, 'x', '0x2001FFF8', 'x', '2'), c(S, 'y', '0x2001FFF4', 'y', '1'),
+                            c('swap() returned', 'a', 'R0', 'a', '(gone)', 'dead'),
+                            c('swap() returned', 'b', 'R1', 'b', '(gone)', 'dead'),
+                        ],
+                        arrows: [],
+                        what: 'swap() returns. a, b and t no longer exist, but the changes they made to x and y stay.',
+                        why: 'The pointers were temporary "remote controls" for the caller\'s data.',
+                        deref: 'Nothing left to dereference.',
+                        tip: 'Mark pointer parameters const when the function only reads (const uint8_t *data, size_t len), and document whether NULL is allowed.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'arith', group: 'Basics', state: 'valid',
+            title: 'Pointer arithmetic & type size',
+            summary: 'p++ moves by sizeof(*p), not by one byte. The pointer type decides the step size and how many bytes are read.',
+            code: [
+                'uint8_t bytes[8] __attribute__((aligned(4))) =',
+                '    {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};',
+                'uint8_t  *p8  = bytes;              p8++;   // +1 byte',
+                'uint16_t *p16 = (uint16_t *)bytes;  p16++;  // +2 bytes',
+                'uint32_t *p32 = (uint32_t *)bytes;  p32++;  // +4 bytes',
+                'ptrdiff_t n = p32 - (uint32_t *)bytes;      // 1 element',
+            ],
+            steps: (() => {
+                const B = '.data — bytes[8] (one row per byte)';
+                const S = 'Stack (main)';
+                const byteRows = (hl = []) => [0, 1, 2, 3, 4, 5, 6, 7].map(i =>
+                    c(B, 'b' + i, '0x2000004' + i, `bytes[${i}]`, '0x1' + i, 'var', { hl: hl.includes(i) }));
+                return [
+                    {
+                        line: [0, 1], status: 'info',
+                        mem: byteRows([0, 1, 2, 3, 4, 5, 6, 7]),
+                        arrows: [],
+                        what: 'Memory is byte-addressed: every byte has its own address. bytes[] fills 0x20000040–0x20000047.',
+                        why: 'Pointers of different types can hold the same address but interpret the memory behind it differently.',
+                        deref: 'No pointers yet.',
+                        tip: 'aligned(4) guarantees the array starts on a 4-byte boundary, so the uint16_t/uint32_t pointers below are correctly aligned.',
+                    },
+                    {
+                        line: 2, status: 'ok',
+                        mem: [...byteRows([1]), c(S, 'p8', '0x2001FFF0', 'p8', '0x20000041', 'ptr', { hl: true, note: 'uint8_t *' })],
+                        arrows: [a('p8', 'b1')],
+                        what: 'p8 started at 0x20000040. p8++ adds sizeof(uint8_t) = 1 → 0x20000041.',
+                        why: 'A uint8_t* walks memory one byte at a time — perfect for buffers and protocol frames.',
+                        deref: '*p8 reads 1 byte → 0x11.',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [...byteRows([2, 3]), c(S, 'p16', '0x2001FFEC', 'p16', '0x20000042', 'ptr', { hl: true, note: 'uint16_t *' })],
+                        arrows: [a('p16', 'b2')],
+                        what: 'p16 started at 0x20000040. p16++ adds sizeof(uint16_t) = 2 → 0x20000042.',
+                        why: 'The same ++ moved twice as far because the pointed-to type is twice as big.',
+                        deref: '*p16 reads 2 bytes (0x12, 0x13) → 0x1312. Little-endian: the byte at the lowest address is the least significant.',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [...byteRows([4, 5, 6, 7]), c(S, 'p32', '0x2001FFE8', 'p32', '0x20000044', 'ptr', { hl: true, note: 'uint32_t *' })],
+                        arrows: [a('p32', 'b4')],
+                        what: 'p32 started at 0x20000040. p32++ adds sizeof(uint32_t) = 4 → 0x20000044.',
+                        why: 'p + n always means "n elements further": address + n × sizeof(*p). That is why arr[i] is defined as *(arr + i).',
+                        deref: '*p32 reads 4 bytes → 0x17161514.',
+                        tip: 'Same ++, three different byte steps. The pointer\'s TYPE, not its value, decides the step.',
+                    },
+                    {
+                        line: 5, status: 'info',
+                        mem: [...byteRows([]), c(S, 'p32', '0x2001FFE8', 'p32', '0x20000044', 'ptr', { note: 'uint32_t *' }), c(S, 'n', '0x2001FFE4', 'n', '1', 'var', { hl: true, note: 'ptrdiff_t' })],
+                        arrows: [a('p32', 'b4')],
+                        what: 'Subtracting two pointers into the same array gives the distance in ELEMENTS: (0x20000044 − 0x20000040) / 4 = 1.',
+                        why: 'The result type is ptrdiff_t. Subtracting or comparing pointers into DIFFERENT objects is undefined behavior.',
+                        deref: '—',
+                        tip: 'Reading the same bytes through different pointer types also breaks C\'s strict-aliasing rule (uint8_t*/char* are the exception). In real code prefer memcpy() or explicit byte assembly.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'pp', group: 'Basics', state: 'valid',
+            title: 'Pointer to pointer',
+            summary: 'A pointer is a variable, so it has an address too. int32_t **pp lets code change which object a pointer points to.',
+            code: [
+                'int32_t x = 5, y = 1;',
+                'int32_t *p = &x;',
+                'int32_t **pp = &p;          // pointer to a pointer',
+                '**pp = 9;                   // follows 2 hops → x = 9',
+                '*pp = &y;                   // changes p itself',
+                '',
+                '// Real use: hand back a pointer through a parameter',
+                'void get_rx_buffer(uint8_t **out) { *out = rx_buf; }',
+            ],
+            steps: (() => {
+                const S = 'Stack (main)';
+                const base = (o = {}) => [
+                    c(S, 'x', '0x2001FFF8', 'x', o.x ?? '5', 'var', { hl: o.hx }),
+                    c(S, 'y', '0x2001FFF4', 'y', '1'),
+                    c(S, 'p', '0x2001FFF0', 'p', o.p ?? '0x2001FFF8', 'ptr', { hl: o.hp, note: 'int32_t *' }),
+                ];
+                return [
+                    {
+                        line: [0, 1], status: 'ok',
+                        mem: base({ hp: true }),
+                        arrows: [a('p', 'x')],
+                        what: 'Start with an ordinary pointer: p holds &x (0x2001FFF8).',
+                        why: 'p lives at its own address, 0x2001FFF0 — so we can take &p.',
+                        deref: '*p → 5.',
+                    },
+                    {
+                        line: 2, status: 'ok',
+                        mem: [...base(), c(S, 'pp', '0x2001FFEC', 'pp', '0x2001FFF0', 'ptr', { hl: true, note: 'int32_t **' })],
+                        arrows: [a('pp', 'p'), a('p', 'x')],
+                        what: 'pp stores the address of p. Two hops: pp → p → x. Read int32_t **pp as "pp is a pointer to a pointer to int32_t".',
+                        why: 'You need this when code must change WHICH object a pointer refers to, not just the object\'s value.',
+                        deref: '*pp → p (0x2001FFF8). **pp → x (5).',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [...base({ x: '9', hx: true }), c(S, 'pp', '0x2001FFEC', 'pp', '0x2001FFF0', 'ptr', { note: 'int32_t **' })],
+                        arrows: [a('pp', 'p'), a('p', 'x')],
+                        what: '**pp follows both arrows — first to p, then to x — and writes 9 into x.',
+                        why: 'Each * removes one level of "pointer to".',
+                        deref: 'Valid: both hops land on live objects.',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [...base({ x: '9', p: '0x2001FFF4', hp: true }), c(S, 'pp', '0x2001FFEC', 'pp', '0x2001FFF0', 'ptr', { note: 'int32_t **' })],
+                        arrows: [a('pp', 'p'), a('p', 'y')],
+                        what: '*pp = &y writes into p itself. p now points to y, while pp still points to p.',
+                        why: 'This is exactly how get_rx_buffer(&ptr) sets the caller\'s pointer: the function receives &ptr (a uint8_t **) and writes *out = rx_buf.',
+                        deref: '*p → 1 (y). **pp → 1.',
+                        tip: 'Other common double pointers: char **argv, linked-list insert (node_t **head), and FreeRTOS APIs that return a handle through a pointer (xTaskCreate(..., &handle)).',
+                    },
+                ];
+            })(),
+        },
 
-        ctx.fillStyle = '#9AA4B2';
-        ctx.font      = '10px "JetBrains Mono", monospace';
-        ctx.textAlign = 'left';
-        if (variables.length) ctx.fillText('int32_t variables', startX, 14);
-        if (pointers.length)  ctx.fillText('int32_t * pointers (also variables, 4 bytes each)', startX, startY + cellH + 52);
+        // =================================================================
+        // DANGEROUS STATES
+        // =================================================================
+        {
+            id: 'wild', group: 'Dangerous states', state: 'danger',
+            title: 'Uninitialized (wild)',
+            summary: 'A local pointer declared without a value holds leftover garbage. It may point anywhere — often at something important.',
+            code: [
+                'void handler(void) {',
+                '    int32_t *p;             // no initializer!',
+                '    *p = 5;                 // write to ???',
+                '}',
+                '',
+                '// Fix: always initialize',
+                'int32_t *p = NULL;          // or = &something_real;',
+            ],
+            steps: [
+                {
+                    line: 1, status: 'bad',
+                    mem: [
+                        c('Stack (handler)', 'p', '0x2001FFE4', 'p', '0x2001FF10', 'ptr', { hl: true, note: 'leftover bits — never set' }),
+                        c('Stack (older frame of task_a)', 'victim', '0x2001FF10', 'saved LR of task_a()', '0x08000A35'),
+                    ],
+                    arrows: [a('p', 'victim', 'warn', '?')],
+                    what: 'p is a local (automatic) variable. C does NOT initialize locals, so p contains whatever bits an earlier function left in that stack slot — here 0x2001FF10.',
+                    why: 'Those leftover bits happen to look like a valid RAM address, which is the worst case: nothing crashes immediately. This is a WILD pointer.',
+                    deref: 'Undefined behavior. *p would access 0x2001FF10, memory that belongs to someone else.',
+                    tip: 'Globals and statics are different: they live in .bss and are zeroed by the startup code, so an uninitialized GLOBAL pointer starts as NULL.',
+                },
+                {
+                    line: 2, status: 'bad',
+                    mem: [
+                        c('Stack (handler)', 'p', '0x2001FFE4', 'p', '0x2001FF10', 'ptr', { note: 'leftover bits — never set' }),
+                        c('Stack (older frame of task_a)', 'victim', '0x2001FF10', 'saved LR of task_a()', '0x00000005', 'corrupt', { hl: true, note: 'overwritten!' }),
+                    ],
+                    arrows: [a('p', 'victim', 'bad', '*p = 5')],
+                    what: '*p = 5 writes 5 into 0x2001FF10. That slot held the saved return address of task_a().',
+                    why: 'Nothing fails now. Later, when task_a() returns, the CPU jumps to 0x00000005 → HardFault. The crash appears far away from the real bug: the classic "impossible" embedded crash.',
+                    deref: 'Undefined behavior: the stack was silently corrupted.',
+                    tip: 'If the garbage had pointed to unmapped memory (e.g. 0xE5A1F300), you would get an immediate BusFault/HardFault instead. Either way it is a bug.',
+                },
+                {
+                    line: 6, status: 'ok',
+                    mem: [
+                        c('Stack (handler)', 'p', '0x2001FFE4', 'p', '0x00000000', 'ptr', { hl: true, note: 'NULL — known "no target"' }),
+                        c('Stack (older frame of task_a)', 'victim', '0x2001FF10', 'saved LR of task_a()', '0x08000A35'),
+                    ],
+                    arrows: [],
+                    what: 'Always initialize pointers when you declare them: to a real object, or to NULL if there is nothing to point at yet.',
+                    why: 'NULL is a value you can TEST: if (p != NULL). Garbage cannot be tested, because every bit pattern looks like an address.',
+                    deref: 'Still must not dereference NULL, but now the bug is detectable.',
+                    tip: 'Compile with -Wall -Wextra (GCC warns with -Wuninitialized / -Wmaybe-uninitialized) and run a static analyzer such as cppcheck or clang-tidy.',
+                },
+            ],
+        },
+        {
+            id: 'null', group: 'Dangerous states', state: 'danger',
+            title: 'NULL pointer',
+            summary: 'NULL means "points to nothing". It is the safe default, but dereferencing it is still a bug. On an MCU it often does NOT crash.',
+            code: [
+                'int32_t *p = NULL;          // (void *)0',
+                'if (p != NULL) {',
+                '    *p = 5;                 // skipped — safe',
+                '}',
+                'int32_t v = *p;             // forgot to check!',
+                '*p = 5;                     // write to address 0',
+            ],
+            steps: (() => {
+                const S = 'Stack (main)';
+                const Z = 'Address 0x00000000 — boot alias of Flash (vector table)';
+                const zero = (hl, note) => [
+                    c(Z, 'z0', '0x00000000', 'vector[0]: initial SP', '0x20020000', 'flash', { hl, note }),
+                    c(Z, 'z1', '0x00000004', 'vector[1]: Reset_Handler', '0x08000189', 'flash'),
+                ];
+                return [
+                    {
+                        line: 0, status: 'warn',
+                        mem: [c(S, 'p', '0x2001FFF0', 'p', '0x00000000', 'ptr', { hl: true, note: 'NULL' }), ...zero(false)],
+                        arrows: [a('p', 'z0', 'warn', 'NULL')],
+                        what: 'NULL is a special pointer value meaning "points to no object". On ARM it is the address 0x00000000.',
+                        why: 'NULL is the honest default: "I have no valid target yet". malloc() returns NULL on failure, and callbacks stay NULL until registered.',
+                        deref: 'Must not be dereferenced. Test it first.',
+                        tip: 'For pointers, NULL, 0 and (void *)0 all compare equal. C23 adds the keyword nullptr.',
+                    },
+                    {
+                        line: [1, 2, 3], status: 'ok',
+                        mem: [c(S, 'p', '0x2001FFF0', 'p', '0x00000000', 'ptr', { note: 'NULL' }), ...zero(false)],
+                        arrows: [a('p', 'z0', 'warn', 'NULL')],
+                        what: 'The if (p != NULL) guard is the standard defense. The write is skipped because p is NULL.',
+                        why: 'Check every pointer that comes from outside — function parameters, malloc(), lookups, registered callbacks — before using it.',
+                        deref: 'No dereference happens. Safe.',
+                        tip: 'Short form: if (p) { ... }. A NULL pointer is false in a condition.',
+                    },
+                    {
+                        line: 4, status: 'bad',
+                        mem: [
+                            c(S, 'p', '0x2001FFF0', 'p', '0x00000000', 'ptr', { note: 'NULL' }),
+                            c(S, 'v', '0x2001FFEC', 'v', '0x20020000', 'corrupt', { hl: true, note: 'nonsense value' }),
+                            ...zero(true, 'read by *p'),
+                        ],
+                        arrows: [a('p', 'z0', 'bad', '*p')],
+                        what: 'The check was forgotten. On a PC this crashes (segfault). On an STM32, address 0 is mapped to Flash, so the read SUCCEEDS and returns 0x20020000 — the initial stack pointer from the vector table.',
+                        why: 'Your code keeps running with a nonsense value. A NULL dereference on a microcontroller often does NOT crash; it quietly reads the vector table.',
+                        deref: 'Undefined behavior in C. On this hardware: a silent garbage read.',
+                        tip: 'Configure the MPU to make the region at 0x00000000 no-access; then every NULL dereference traps immediately in MemManage_Handler.',
+                    },
+                    {
+                        line: 5, status: 'bad',
+                        mem: [
+                            c(S, 'p', '0x2001FFF0', 'p', '0x00000000', 'ptr', { note: 'NULL' }),
+                            c(S, 'v', '0x2001FFEC', 'v', '0x20020000', 'var'),
+                            ...zero(true, 'write ignored / BusFault'),
+                        ],
+                        arrows: [a('p', 'z0', 'bad', '*p = 5')],
+                        what: 'Writing to address 0 targets Flash, which cannot be written with a normal store instruction.',
+                        why: 'Depending on the chip, the write is silently dropped or raises a BusFault → HardFault. Either way the data is lost.',
+                        deref: 'Undefined behavior. On STM32F4: typically an (imprecise) BusFault or a dropped write.',
+                        tip: 'Rule: every pointer that can be NULL must be checked before *p, p->field, p[i] or p().',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'free', group: 'Dangerous states', state: 'danger',
+            title: 'Dangling: use after free',
+            summary: 'After free(), the pointer still holds the old address. The memory may already belong to someone else.',
+            code: [
+                'uint8_t *buf = malloc(16);',
+                'buf[0] = 0xAB;',
+                'free(buf);',
+                'uint8_t *msg = malloc(16);  // allocator reuses the block',
+                'msg[0] = 0x11;',
+                'buf[0] = 0xCD;              // use after free!',
+                'buf = NULL;                 // fix: clear after free',
+            ],
+            steps: (() => {
+                const S = 'Stack (main)';
+                const Hh = 'Heap';
+                const buf = (v, o = {}) => c(S, 'buf', '0x2001FFF0', 'buf', v, 'ptr', { note: 'uint8_t *', ...o });
+                const msg = (o = {}) => c(S, 'msg', '0x2001FFEC', 'msg', '0x20000400', 'ptr', { note: 'uint8_t *', ...o });
+                const blk = (v, kind, note, hl) => c(Hh, 'blk', '0x20000400', 'heap block [16 B]', v, kind, { note, hl });
+                return [
+                    {
+                        line: 0, status: 'ok',
+                        mem: [buf('0x20000400', { hl: true }), blk('?? (not cleared)', 'var', 'owned by buf', true)],
+                        arrows: [a('buf', 'blk')],
+                        what: 'malloc(16) reserves 16 bytes on the heap and returns their address. buf now points to the block at 0x20000400.',
+                        why: 'Heap memory lives until you call free(), not until the function returns.',
+                        deref: 'Valid, after checking buf != NULL (malloc can fail!).',
+                        tip: 'Many embedded projects forbid malloc() after initialization (MISRA C Rule 21.3) because of fragmentation and unpredictable timing.',
+                    },
+                    {
+                        line: 1, status: 'ok',
+                        mem: [buf('0x20000400'), blk('0xAB …', 'var', 'owned by buf', true)],
+                        arrows: [a('buf', 'blk')],
+                        what: 'buf[0] = 0xAB writes the first byte of the block. buf[0] means *(buf + 0).',
+                        why: 'Normal, valid use of heap memory.',
+                        deref: 'Valid write.',
+                    },
+                    {
+                        line: 2, status: 'bad',
+                        mem: [buf('0x20000400', { hl: true, note: 'still the old address!' }), blk('freed', 'freed', 'returned to allocator', true)],
+                        arrows: [a('buf', 'blk', 'bad', 'dangling')],
+                        what: 'free(buf) gives the block back to the allocator. But buf still holds 0x20000400, because free() cannot change your variable.',
+                        why: 'buf is now a DANGLING pointer: it looks exactly like a valid pointer, but the memory no longer belongs to you.',
+                        deref: 'Undefined behavior from this moment on.',
+                        tip: 'The allocator may already have written its own bookkeeping (free-list links) into those bytes.',
+                    },
+                    {
+                        line: 3, status: 'bad',
+                        mem: [buf('0x20000400'), msg({ hl: true }), blk('?? (not cleared)', 'var', 'new owner: msg', true)],
+                        arrows: [a('msg', 'blk'), a('buf', 'blk', 'bad', 'dangling')],
+                        what: 'The next malloc(16) receives the SAME block. Now two pointers hold 0x20000400: msg (the legitimate owner) and buf (dangling).',
+                        why: 'That is what makes use-after-free bugs so nasty: the stale pointer silently aliases someone else\'s data.',
+                        deref: '*msg is valid. *buf is undefined behavior.',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [buf('0x20000400'), msg(), blk('0x11 …', 'var', 'new owner: msg', true)],
+                        arrows: [a('msg', 'blk'), a('buf', 'blk', 'bad', 'dangling')],
+                        what: 'msg[0] = 0x11. The new owner stores its data.',
+                        why: 'Everything looks fine — until the dangling pointer is used.',
+                        deref: 'Valid write through msg.',
+                    },
+                    {
+                        line: 5, status: 'bad',
+                        mem: [buf('0x20000400'), msg(), blk('0xCD …', 'corrupt', 'msg data overwritten!', true)],
+                        arrows: [a('msg', 'blk'), a('buf', 'blk', 'bad', 'buf[0] = 0xCD')],
+                        what: 'Writing through the dangling buf overwrites msg\'s data. msg[0] changed from 0x11 to 0xCD, although nobody touched msg.',
+                        why: 'The corruption shows up later in unrelated code (for example a garbled UART message), which makes it extremely hard to trace.',
+                        deref: 'Undefined behavior: another allocation was corrupted.',
+                    },
+                    {
+                        line: 6, status: 'ok',
+                        mem: [buf('0x00000000', { hl: true, note: 'NULL' }), msg(), blk('0x11 …', 'var', 'owned by msg', false)],
+                        arrows: [a('msg', 'blk')],
+                        what: 'Setting the pointer to NULL right after free() turns a silent dangling pointer into a NULL pointer, which you can test for (and an MPU can trap).',
+                        why: 'free(NULL) is defined to do nothing, so an accidental double free also becomes harmless.',
+                        deref: 'buf is NULL: check before use.',
+                        tip: 'Better still in firmware: static buffers or fixed-size memory pools instead of malloc/free.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'scope', group: 'Dangerous states', state: 'danger',
+            title: 'Dangling: returned local',
+            summary: 'Returning the address of a local variable: the stack frame dies on return, so the pointer points into recycled stack.',
+            code: [
+                'int32_t *get_value(void) {',
+                '    int32_t local = 7;',
+                '    return &local;          // ⚠ address of a stack variable',
+                '}',
+                '',
+                'int32_t *p = get_value();',
+                'uart_send_byte(0x55);       // another call reuses the stack',
+                'int32_t v = *p;             // reads garbage',
+            ],
+            steps: (() => {
+                const S = 'Stack (main)';
+                const p = (v, o = {}) => c(S, 'p', '0x2001FFF0', 'p', v, 'ptr', { note: 'int32_t *', ...o });
+                return [
+                    {
+                        line: 1, status: 'ok',
+                        mem: [p('?'), c('Stack: get_value() frame (active)', 'slot', '0x2001FFD8', 'local', '7', 'var', { hl: true })],
+                        arrows: [],
+                        what: 'Calling get_value() pushes a new stack frame. local lives inside that frame at 0x2001FFD8 and holds 7.',
+                        why: 'Automatic (local) variables exist only while their function is running.',
+                        deref: '&local is valid only inside get_value().',
+                    },
+                    {
+                        line: [2, 5], status: 'bad',
+                        mem: [p('0x2001FFD8', { hl: true }), c('Stack: popped frame (free for reuse)', 'slot', '0x2001FFD8', 'local (dead)', '7 (stale)', 'dead', { hl: true })],
+                        arrows: [a('p', 'slot', 'bad', 'dangling')],
+                        what: 'return &local hands back the address, then the function returns and its frame is popped. p now holds 0x2001FFD8: the address of a variable that no longer exists.',
+                        why: 'The old 7 may still be sitting there, so tests often pass. The bug stays hidden until something else uses that stack area.',
+                        deref: 'Undefined behavior (it may "work" by luck).',
+                        tip: 'GCC warns "function returns address of local variable" (-Wreturn-local-addr). Never ignore it.',
+                    },
+                    {
+                        line: 6, status: 'bad',
+                        mem: [p('0x2001FFD8'), c('Stack: uart_send_byte() frame (active)', 'slot', '0x2001FFD8', 'saved LR', '0x08000F1D', 'var', { hl: true, note: 'new owner of the slot' })],
+                        arrows: [a('p', 'slot', 'bad', 'dangling')],
+                        what: 'uart_send_byte() runs next, and its frame occupies the same stack area. Its saved return address 0x08000F1D lands exactly where local used to be.',
+                        why: 'Stack memory is recycled constantly: by function calls, and by interrupts that can fire at any moment.',
+                        deref: 'p now points into another function\'s frame.',
+                    },
+                    {
+                        line: 7, status: 'bad',
+                        mem: [
+                            p('0x2001FFD8'),
+                            c(S, 'v', '0x2001FFEC', 'v', '0x08000F1D', 'corrupt', { hl: true, note: 'expected 7!' }),
+                            c('Stack: popped frame (free for reuse)', 'slot', '0x2001FFD8', '(dead)', '0x08000F1D', 'dead'),
+                        ],
+                        arrows: [a('p', 'slot', 'bad', '*p')],
+                        what: 'Reading *p returns 0x08000F1D (a code address) instead of 7.',
+                        why: 'Fixes: return the value itself (return local;), make the variable static, or let the caller pass a buffer: void get_value(int32_t *out).',
+                        deref: 'Undefined behavior: garbage value.',
+                        tip: 'Never let a pointer outlive the object it points to. The same rule applies to storing &local in a global, a queue, or a DMA descriptor.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'oob', group: 'Dangerous states', state: 'danger',
+            title: 'Arrays & out of bounds',
+            summary: 'Array names decay to pointers, one-past-the-end is legal to compute, and writing past the end corrupts neighbours.',
+            code: [
+                'int32_t arr[4] = {10, 20, 30, 40};',
+                'int32_t count  = 3;         // placed right after arr',
+                'int32_t *p = arr;           // same as &arr[0]',
+                'p = p + 2;                  // → arr[2]',
+                'int32_t *end = arr + 4;     // one past the end',
+                '*end = 0;                   // ✗ out-of-bounds write',
+            ],
+            steps: (() => {
+                const G = '.data (globals)';
+                const S = 'Stack (main)';
+                const arr = (hl = [], countVal = '3', countKind = 'var', countNote) => [
+                    ...[10, 20, 30, 40].map((v, i) => c(G, 'a' + i, '0x200000' + (0x10 + i * 4).toString(16).toUpperCase(), `arr[${i}]`, String(v), 'var', { hl: hl.includes(i) })),
+                    c(G, 'cnt', '0x20000020', 'count', countVal, countKind, { hl: hl.includes('c'), note: countNote }),
+                ];
+                return [
+                    {
+                        line: [0, 1], status: 'info',
+                        mem: arr([0, 1, 2, 3, 'c']),
+                        arrows: [],
+                        what: 'An array is a block of consecutive elements. arr occupies 16 bytes (0x20000010–0x2000001F), and the linker placed count immediately after it.',
+                        why: 'C does not store an array\'s length anywhere and never checks indexes at run time.',
+                        deref: 'No pointers yet.',
+                        tip: 'sizeof(arr) = 16 and sizeof(arr)/sizeof(arr[0]) = 4, but only where arr is the real array, not a pointer.',
+                    },
+                    {
+                        line: 2, status: 'ok',
+                        mem: [...arr([0]), c(S, 'p', '0x2001FFF0', 'p', '0x20000010', 'ptr', { hl: true, note: 'int32_t *' })],
+                        arrows: [a('p', 'a0')],
+                        what: 'In most expressions an array name "decays" to a pointer to its first element: p = arr is identical to p = &arr[0].',
+                        why: 'That is why arrays can be passed to functions as pointers, and also why the function loses the length (pass it separately).',
+                        deref: '*p → 10. arr[i] is defined as *(arr + i).',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [...arr([2]), c(S, 'p', '0x2001FFF0', 'p', '0x20000018', 'ptr', { hl: true, note: 'int32_t *' })],
+                        arrows: [a('p', 'a2')],
+                        what: 'p + 2 does not add 2 bytes but 2 ELEMENTS: 2 × sizeof(int32_t) = 8 bytes. 0x20000010 + 8 = 0x20000018 → arr[2].',
+                        why: 'Pointer arithmetic is scaled by the pointed-to type. That is what lets p++ walk through any array.',
+                        deref: '*p → 30. p[1] → 40. p - arr → 2 (elements, type ptrdiff_t).',
+                    },
+                    {
+                        line: 4, status: 'warn',
+                        mem: [...arr([]), c(S, 'p', '0x2001FFF0', 'p', '0x20000018', 'ptr', { note: 'int32_t *' }), c(S, 'end', '0x2001FFEC', 'end', '0x20000020', 'ptr', { hl: true, note: 'one past the end' })],
+                        arrows: [a('p', 'a2'), a('end', 'cnt', 'warn', 'one-past-end')],
+                        what: 'arr + 4 points just past the last element. C explicitly allows computing and comparing this "one-past-the-end" pointer.',
+                        why: 'It is the natural loop limit: for (p = arr; p < end; p++) visits exactly arr[0]..arr[3].',
+                        deref: 'NOT allowed. It happens to hold the address of count, but it is not a pointer to count.',
+                        tip: 'Going further (arr + 5) or before the start (arr - 1) is undefined behavior even if you never dereference it.',
+                    },
+                    {
+                        line: 5, status: 'bad',
+                        mem: [...arr(['c'], '0', 'corrupt', 'overwritten by *end!'), c(S, 'p', '0x2001FFF0', 'p', '0x20000018', 'ptr', { note: 'int32_t *' }), c(S, 'end', '0x2001FFEC', 'end', '0x20000020', 'ptr', { note: 'one past the end' })],
+                        arrows: [a('p', 'a2'), a('end', 'cnt', 'bad', '*end = 0')],
+                        what: 'Writing through end stores 0 at 0x20000020, on top of count. The array "overflowed" into its neighbour.',
+                        why: 'This is a buffer overflow, the #1 cause of mysteriously changing variables in firmware. Think of rx_buf[idx++] = byte without an idx < SIZE check.',
+                        deref: 'Undefined behavior: count silently became 0.',
+                        tip: 'Bounds-check every index that comes from outside (UART bytes, packet lengths), and always pass the array length together with the pointer.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'align', group: 'Dangerous states', state: 'danger',
+            title: 'Misaligned pointer',
+            summary: 'Casting a byte buffer to uint32_t* at an odd address. It may work at -O0 and HardFault at -O2.',
+            code: [
+                'uint8_t rx[8] = {0x7E, 0x44, 0x33, 0x22, 0x11, 0, 0, 0};',
+                'uint32_t *w = (uint32_t *)&rx[1];   // address …61',
+                'uint32_t v = *w;                    // ✗ unaligned access',
+                'memcpy(&v, &rx[1], sizeof v);       // ✓ portable fix',
+            ],
+            steps: (() => {
+                const B = '.bss — rx[8] (one row per byte)';
+                const S = 'Stack (main)';
+                const vals = ['0x7E', '0x44', '0x33', '0x22', '0x11', '0x00', '0x00', '0x00'];
+                const rx = (hl = []) => vals.map((v, i) => c(B, 'r' + i, '0x2000006' + i, `rx[${i}]`, v, 'var', { hl: hl.includes(i), note: i === 0 ? 'start byte' : (i >= 1 && i <= 4 ? 'payload' : undefined) }));
+                return [
+                    {
+                        line: 0, status: 'info',
+                        mem: rx([1, 2, 3, 4]),
+                        arrows: [],
+                        what: 'A UART frame landed in rx[]: a start byte 0x7E followed by a 32-bit value. The value starts at rx[1] = 0x20000061.',
+                        why: 'A uint32_t is normally expected at an address divisible by 4 (…0, …4, …8, …C). 0x20000061 is not.',
+                        deref: 'No pointers yet.',
+                    },
+                    {
+                        line: 1, status: 'warn',
+                        mem: [...rx([1]), c(S, 'w', '0x2001FFF0', 'w', '0x20000061', 'ptr', { hl: true, note: 'uint32_t * — misaligned' })],
+                        arrows: [a('w', 'r1', 'warn', 'misaligned')],
+                        what: 'The cast compiles without complaint, because C trusts you. But w now holds a misaligned uint32_t address.',
+                        why: 'The compiler assumes every uint32_t* is 4-byte aligned and may generate instructions that rely on it.',
+                        deref: 'Dereferencing it is undefined behavior.',
+                    },
+                    {
+                        line: 2, status: 'bad',
+                        mem: [...rx([1, 2, 3, 4]), c(S, 'w', '0x2001FFF0', 'w', '0x20000061', 'ptr', { note: 'uint32_t * — misaligned' }), c(S, 'v', '0x2001FFEC', 'v', '0x11223344 or HardFault', 'corrupt', { hl: true })],
+                        arrows: [a('w', 'r1', 'bad', '*w')],
+                        what: 'Cortex-M3/M4 can perform a plain unaligned LDR from RAM (slower: two bus accesses), so this may "work" and return 0x11223344.',
+                        why: 'But the compiler may use LDRD/LDM, which ALWAYS fault on unaligned addresses → UsageFault (UNALIGNED) → HardFault. On Cortex-M0/M0+ every unaligned access faults. Typical symptom: works at -O0, crashes at -O2.',
+                        deref: 'Undefined behavior.',
+                        tip: 'Setting the UNALIGN_TRP bit in SCB->CCR makes every unaligned access trap, which is great for finding these bugs during development.',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [...rx([1, 2, 3, 4]), c(S, 'v', '0x2001FFEC', 'v', '0x11223344', 'var', { hl: true })],
+                        arrows: [],
+                        what: 'memcpy() copies bytes and works at any alignment. With optimization on, GCC turns it into the fastest SAFE instruction sequence.',
+                        why: 'No misaligned pointer is ever created, so there is no undefined behavior.',
+                        deref: 'Safe.',
+                        tip: 'For protocol parsing, assemble values explicitly: v = rx[1] | rx[2] << 8 | rx[3] << 16 | (uint32_t)rx[4] << 24. This also makes the byte order explicit.',
+                    },
+                ];
+            })(),
+        },
 
-        // Draw variables
-        variables.forEach((v, i) => {
-            const x = startX + i * (cellW + 20);
-            const y = startY;
+        // =================================================================
+        // TYPES & QUALIFIERS
+        // =================================================================
+        {
+            id: 'const', group: 'Types & qualifiers', state: 'info',
+            title: 'const pointers',
+            summary: 'Where you put const decides what is locked: the data, the pointer, or both. Read declarations right-to-left.',
+            code: [
+                'const int32_t limit = 100;           // stored in Flash (.rodata)',
+                'const int32_t *pc = &limit;          // pointer TO const',
+                '// *pc = 5;     ✗ error: data is read-only',
+                'int32_t a = 1, b = 2;',
+                'int32_t *const pfix = &a;            // CONST pointer',
+                '*pfix = 5;      // ✓ the data may change',
+                '// pfix = &b;   ✗ error: pointer is fixed',
+                'const int32_t *const pall = &limit;  // both locked',
+            ],
+            steps: (() => {
+                const F = 'Flash (.rodata)';
+                const S = 'Stack (main)';
+                const lim = (hl) => c(F, 'lim', '0x08004000', 'limit', '100', 'flash', { hl, note: 'const int32_t' });
+                return [
+                    {
+                        line: [0, 1, 2], status: 'ok',
+                        mem: [lim(true), c(S, 'pc', '0x2001FFF0', 'pc', '0x08004000', 'ptr', { hl: true, note: 'const int32_t *' })],
+                        arrows: [a('pc', 'lim')],
+                        what: 'Read right-to-left: "pc is a pointer to an int32_t that is const". You may move pc to point elsewhere, but you may not write through it.',
+                        why: 'const data on an MCU is placed in Flash by the linker, which saves RAM. Writing it would fail at run time, so the compiler stops you at compile time.',
+                        deref: '*pc → 100 (reading is fine). *pc = 5 → compile error.',
+                        tip: 'Parameters like const uint8_t *data promise the caller "I only read your buffer". Use them everywhere you can.',
+                    },
+                    {
+                        line: [3, 4, 5], status: 'ok',
+                        mem: [lim(false), c(S, 'pc', '0x2001FFF0', 'pc', '0x08004000', 'ptr', { note: 'const int32_t *' }), c(S, 'a', '0x2001FFEC', 'a', '5', 'var', { hl: true }), c(S, 'b', '0x2001FFE8', 'b', '2'), c(S, 'pfix', '0x2001FFE4', 'pfix', '0x2001FFEC', 'ptr', { hl: true, note: 'int32_t *const' })],
+                        arrows: [a('pc', 'lim'), a('pfix', 'a')],
+                        what: '"pfix is a const pointer to int32_t". The address stored in pfix can never change, but the int32_t it points to can: *pfix = 5 makes a = 5.',
+                        why: 'Ideal for a pointer that must always refer to the same thing, such as a hardware register: volatile uint32_t *const ODR = ...',
+                        deref: '*pfix = 5 → valid write to a.',
+                    },
+                    {
+                        line: 6, status: 'warn', statusLabel: '⚠ Compile error',
+                        mem: [lim(false), c(S, 'a', '0x2001FFEC', 'a', '5'), c(S, 'b', '0x2001FFE8', 'b', '2', 'var', { hl: true }), c(S, 'pfix', '0x2001FFE4', 'pfix', '0x2001FFEC', 'ptr', { hl: true, note: 'int32_t *const — locked' })],
+                        arrows: [a('pfix', 'a')],
+                        what: 'Re-pointing a const pointer is rejected: pfix = &b does not compile, so pfix keeps pointing at a.',
+                        why: 'Position matters: const BEFORE the * protects the data; const AFTER the * protects the pointer.',
+                        deref: 'Nothing happens at run time; the program does not compile.',
+                    },
+                    {
+                        line: 7, status: 'ok',
+                        mem: [lim(true), c(S, 'pall', '0x2001FFE0', 'pall', '0x08004000', 'ptr', { hl: true, note: 'const int32_t *const' })],
+                        arrows: [a('pall', 'lim')],
+                        what: 'pall is a const pointer to const int32_t: neither the pointer nor the data may change.',
+                        why: 'Typical for lookup tables in Flash: static const uint8_t *const font = font_data;',
+                        deref: '*pall → 100 (read only).',
+                        tip: 'Cheat sheet: const T *p (data locked) · T *const p (pointer locked) · const T *const p (both locked). T const *p means the same as const T *p.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'void', group: 'Types & qualifiers', state: 'info',
+            title: 'void * (generic pointer)',
+            summary: 'A typeless address. Any object pointer converts to void* and back; you must convert it before dereferencing.',
+            code: [
+                'uint32_t word = 0x11223344;',
+                'void *vp = &word;             // any object pointer → void*',
+                '// *vp = 0;    ✗ cannot dereference void*',
+                'uint8_t *bp = (uint8_t *)vp;  // convert to a real type',
+                'uint8_t first = *bp;          // 0x44 — little-endian!',
+                'memset(vp, 0, sizeof word);   // generic APIs take void*',
+            ],
+            steps: (() => {
+                const W = '.data — word (one row per byte)';
+                const S = 'Stack (main)';
+                const word = (vals, hl = []) => vals.map((v, i) => c(W, 'w' + i, '0x2000008' + i, `word byte ${i}`, v, 'var', { hl: hl.includes(i), note: i === 0 ? 'least significant' : (i === 3 ? 'most significant' : undefined) }));
+                const orig = ['0x44', '0x33', '0x22', '0x11'];
+                const vp = (hl) => c(S, 'vp', '0x2001FFF0', 'vp', '0x20000080', 'ptr', { hl, note: 'void *' });
+                return [
+                    {
+                        line: 0, status: 'info',
+                        mem: word(orig, [0, 1, 2, 3]),
+                        arrows: [],
+                        what: 'word occupies 4 bytes. Cortex-M is little-endian, so the least significant byte (0x44) sits at the lowest address.',
+                        why: 'Byte order matters as soon as you look at memory byte by byte, which is exactly what void* and uint8_t* code does.',
+                        deref: 'No pointers yet.',
+                    },
+                    {
+                        line: 1, status: 'ok',
+                        mem: [...word(orig), vp(true)],
+                        arrows: [a('vp', 'w0')],
+                        what: 'void* is a generic "address of something" with no type information. In C, any object pointer converts to void* and back without a cast.',
+                        why: 'Used by memcpy/memset, malloc, callback contexts, and RTOS task parameters (void *pvParameters).',
+                        deref: 'Not possible: the compiler does not know how many bytes to read.',
+                    },
+                    {
+                        line: 2, status: 'warn', statusLabel: '⚠ Compile error',
+                        mem: [...word(orig), vp(true)],
+                        arrows: [a('vp', 'w0', 'warn', 'no type')],
+                        what: '*vp does not compile: void has no size, so there is nothing to read.',
+                        why: 'void* only carries an address. The type has to come back from somewhere: a cast, or assignment to a typed pointer.',
+                        deref: 'Compile error.',
+                        tip: 'ISO C also forbids arithmetic on void* (GCC allows it as an extension, treating it as 1 byte). Convert first.',
+                    },
+                    {
+                        line: [3, 4], status: 'ok',
+                        mem: [...word(orig, [0]), vp(false), c(S, 'bp', '0x2001FFEC', 'bp', '0x20000080', 'ptr', { hl: true, note: 'uint8_t *' }), c(S, 'first', '0x2001FFEB', 'first', '0x44', 'var', { hl: true, note: 'uint8_t' })],
+                        arrows: [a('vp', 'w0'), a('bp', 'w0')],
+                        what: 'Converting to uint8_t* says "treat this address as bytes". *bp reads ONE byte: 0x44.',
+                        why: 'Accessing any object as bytes through uint8_t*/char* is always allowed by C. That is how serializers and checksums work.',
+                        deref: '*bp → 0x44.',
+                    },
+                    {
+                        line: 5, status: 'ok',
+                        mem: [...word(['0x00', '0x00', '0x00', '0x00'], [0, 1, 2, 3]), vp(false)],
+                        arrows: [a('vp', 'w0')],
+                        what: 'memset() receives the address as void* and clears 4 bytes. word is now 0.',
+                        why: 'Generic functions take void* so they can work on any type; you pass the size explicitly.',
+                        deref: 'Valid: memset writes exactly sizeof word bytes.',
+                        tip: 'When you get a void* back (malloc, a queue, a callback context), convert it to the ORIGINAL type of the object before using it.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'func', group: 'Types & qualifiers', state: 'info',
+            title: 'Function pointer',
+            summary: 'Holds the address of code. Used for callbacks, vector tables and state machines. Calling NULL means HardFault.',
+            code: [
+                'typedef void (*callback_t)(void);',
+                'void led_on(void) { GPIOA->BSRR = 1U << 5; }',
+                'callback_t on_press = NULL;',
+                'on_press = led_on;            // store the function\'s address',
+                'if (on_press) on_press();     // call through the pointer',
+                'callback_t bad = NULL;',
+                'bad();                        // ✗ branch to address 0',
+            ],
+            steps: (() => {
+                const F = 'Flash — program code';
+                const Z = 'Address 0x00000000 — vector table (Flash alias)';
+                const D = '.bss (globals)';
+                const code = (hl) => c(F, 'fn', '0x08000400', 'led_on()', '<machine code>', 'code', { hl });
+                const vec = (hl, note) => c(Z, 'z0', '0x00000000', 'vector[0]: initial SP', '0x20020000', 'flash', { hl, note });
+                return [
+                    {
+                        line: [0, 1, 2], status: 'info',
+                        mem: [code(true), c(D, 'cb', '0x20000100', 'on_press', '0x00000000', 'ptr', { hl: true, note: 'NULL = none registered' })],
+                        arrows: [],
+                        what: 'A function pointer stores the address of CODE instead of data. callback_t is a "pointer to a function taking no arguments and returning void".',
+                        why: 'NULL means "no callback registered yet". Global pointers are zeroed at startup anyway.',
+                        deref: 'Calling it now would be a bug.',
+                        tip: 'Read void (*cb)(void) inside-out: cb is a pointer (*cb) to a function (void) returning void. The parentheses around *cb matter.',
+                    },
+                    {
+                        line: 3, status: 'ok',
+                        mem: [code(true), c(D, 'cb', '0x20000100', 'on_press', '0x08000401', 'ptr', { hl: true, note: 'bit 0 = Thumb' })],
+                        arrows: [a('cb', 'fn')],
+                        what: 'Assigning the function name stores its address. Look at the value: 0x08000401. The code starts at 0x08000400, but bit 0 is set.',
+                        why: 'On Cortex-M, bit 0 = 1 marks Thumb code. Branch-and-exchange instructions (BLX) require it, and the toolchain sets it automatically.',
+                        deref: 'Calling on_press() executes led_on().',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [code(true), c(D, 'cb', '0x20000100', 'on_press', '0x08000401', 'ptr', { note: 'bit 0 = Thumb' })],
+                        arrows: [a('cb', 'fn', 'ok', 'call')],
+                        what: 'on_press() branches to led_on. The if (on_press) check protects against calling an unregistered callback.',
+                        why: 'Callbacks let a driver call application code without knowing it in advance (button pressed, DMA complete, packet received).',
+                        deref: 'Valid call.',
+                        tip: 'Interrupt vector tables, driver "ops" tables and state machines are all arrays of function pointers.',
+                    },
+                    {
+                        line: [5, 6], status: 'bad',
+                        mem: [code(false), vec(true, 'not code!'), c('Stack (main)', 'bad', '0x2001FFF0', 'bad', '0x00000000', 'ptr', { hl: true, note: 'NULL' })],
+                        arrows: [a('bad', 'z0', 'bad', 'bad()')],
+                        what: 'Calling a NULL function pointer branches to address 0 with bit 0 = 0, which requests ARM (non-Thumb) state.',
+                        why: 'Cortex-M can only execute Thumb code, so the core raises a UsageFault (INVSTATE) → HardFault. Without a fault handler the system just hangs in HardFault_Handler.',
+                        deref: 'Undefined behavior → HardFault.',
+                        tip: 'Always check callbacks before calling them, or initialize them to a safe default (an empty do-nothing function) instead of NULL.',
+                    },
+                ];
+            })(),
+        },
+        {
+            id: 'reg', group: 'Types & qualifiers', state: 'info',
+            title: 'volatile register pointer',
+            summary: 'Hardware registers are just addresses. A const pointer to volatile data is the correct type for them.',
+            code: [
+                '#define GPIOA_IDR_ADDR 0x40020010u',
+                '#define GPIOA_ODR_ADDR 0x40020014u',
+                'volatile uint32_t *const idr = (volatile uint32_t *)GPIOA_IDR_ADDR;',
+                'volatile uint32_t *const odr = (volatile uint32_t *)GPIOA_ODR_ADDR;',
+                '*odr |= (1U << 5);              // LED on (read-modify-write)',
+                'while ((*idr & 1U) == 0) { }    // wait for button on PA0',
+            ],
+            steps: (() => {
+                const F = 'Flash (.rodata) — the pointers are const';
+                const P = 'Peripheral space — GPIOA registers';
+                const ptrs = [
+                    c(F, 'pi', '0x08004010', 'idr', '0x40020010', 'ptr', { note: 'volatile uint32_t *const' }),
+                    c(F, 'po', '0x08004014', 'odr', '0x40020014', 'ptr', { note: 'volatile uint32_t *const' }),
+                ];
+                const regs = (idr, odr, o = {}) => [
+                    c(P, 'IDR', '0x40020010', 'GPIOA->IDR', idr, 'reg', { hl: o.hi, note: o.ni || 'input pins (read-only)' }),
+                    c(P, 'ODR', '0x40020014', 'GPIOA->ODR', odr, 'reg', { hl: o.ho, note: 'output pins' }),
+                ];
+                return [
+                    {
+                        line: [0, 1, 2, 3], status: 'ok',
+                        mem: [...ptrs, ...regs('0x00000000', '0x00000000', { hi: true, ho: true })],
+                        arrows: [a('pi', 'IDR'), a('po', 'ODR')],
+                        what: 'A hardware register is just an address. Casting the integer 0x40020014 to a pointer lets C read and write the GPIOA output register.',
+                        why: 'Read the type right-to-left: odr is a const pointer (never re-pointed) to a volatile uint32_t (the value can change behind the compiler\'s back).',
+                        deref: 'Valid: this is a real peripheral register (after the GPIOA clock is enabled in RCC).',
+                        tip: 'Because the pointers are const and initialized with constants, the compiler can keep them in Flash or fold them away entirely.',
+                    },
+                    {
+                        line: 4, status: 'ok',
+                        mem: [...ptrs, ...regs('0x00000000', '0x00000020', { ho: true })],
+                        arrows: [a('pi', 'IDR'), a('po', 'ODR', 'ok', '|=')],
+                        what: '*odr |= (1U << 5) reads ODR, sets bit 5, and writes it back. PA5 goes high and the LED turns on.',
+                        why: 'volatile forces the compiler to perform the real read and the real write, in exactly the order written, with no caching in CPU registers.',
+                        deref: 'Valid read + write of a peripheral register.',
+                    },
+                    {
+                        line: 5, status: 'ok',
+                        mem: [...ptrs, ...regs('0x00000000', '0x00000020', { hi: true, ni: 'bit 0 = 0 (button released)' })],
+                        arrows: [a('pi', 'IDR', 'ok', 'read every loop'), a('po', 'ODR')],
+                        what: 'The loop re-reads IDR on every iteration. While the button is released, bit 0 stays 0 and the loop keeps waiting.',
+                        why: 'Without volatile, the compiler may read IDR once, see 0, and turn the loop into while(1) — an infinite loop that only appears at -O2.',
+                        deref: 'Valid read.',
+                    },
+                    {
+                        line: 5, status: 'ok',
+                        mem: [...ptrs, ...regs('0x00000001', '0x00000020', { hi: true, ni: 'bit 0 = 1 (button pressed!)' })],
+                        arrows: [a('pi', 'IDR', 'ok', 'read every loop'), a('po', 'ODR')],
+                        what: 'The button is pressed: the HARDWARE changed IDR on its own. The next volatile read sees bit 0 = 1, and the loop ends.',
+                        why: 'This is exactly what volatile is for: memory that changes without any C code writing to it (registers, ISR-shared flags, DMA buffers).',
+                        deref: 'Valid read.',
+                        tip: 'volatile belongs to the pointed-to type (volatile uint32_t *). uint32_t *volatile p would make the POINTER volatile, which is a different (rarely needed) thing.',
+                    },
+                ];
+            })(),
+        },
+    ];
+}
 
-            // Address label
-            ctx.fillStyle = '#6E7681';
-            ctx.font      = '9px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(
-                `0x${(0x20000000 + i * 4).toString(16).toUpperCase()}`,
-                x + cellW / 2, y - 8
-            );
+function drawPointerMemory(canvas, step) {
+    if (!canvas || !step) return;
+    const rows = step.mem || [];
+    const arrows = step.arrows || [];
+    const rowH = 44;
+    const regionH = 24;
+    const top = 8;
 
-            // Cell
-            ctx.fillStyle = v.highlight ? '#FF6B35' : '#3B82F6';
-            ctx.fillRect(x, y, cellW, cellH);
-            ctx.strokeStyle = '#E6EDF3';
-            ctx.lineWidth   = 2;
-            ctx.strokeRect(x, y, cellW, cellH);
+    let regionCount = 0;
+    let prevRegion = null;
+    rows.forEach((r) => { if (r.region !== prevRegion) { regionCount++; prevRegion = r.region; } });
+    const needH = top + regionCount * regionH + rows.length * rowH + 12;
+    canvas.dataset.sized = '1';
+    canvas.style.height = Math.max(200, needH) + 'px';
 
-            // Value
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font      = 'bold 16px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(v.value.toString(), x + cellW / 2, y + cellH / 2 + 6);
+    const { ctx, W, H } = syncCanvasSize(canvas);
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    ctx.fillStyle = isDark ? '#0D1117' : '#1E1E2E';
+    ctx.fillRect(0, 0, W, H);
 
-            // Variable name
-            ctx.fillStyle = '#A6E3A1';
-            ctx.font      = '11px "JetBrains Mono", monospace';
-            ctx.fillText(v.name, x + cellW / 2, y + cellH + 18);
-        });
+    const addrW = 84;
+    const boxX = 10 + addrW;
+    ctx.font = 'bold 10px "JetBrains Mono", monospace';
+    const labelW = arrows.reduce((m, ar) => Math.max(m, ar.label ? ctx.measureText(ar.label).width + 12 : 0), 0);
+    const laneArea = 22 + arrows.length * 16 + labelW;
+    const boxW = Math.max(170, Math.min(400, W - boxX - laneArea));
 
-        // Draw pointers
-        pointers.forEach((p, i) => {
-            const ptrX = startX + i * (cellW + 20);
-            const ptrY = startY + cellH + 80;
-
-            ctx.fillStyle = '#6E7681';
-            ctx.font      = '9px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(
-                `0x${(0x20000100 + i * 4).toString(16).toUpperCase()}`,
-                ptrX + cellW / 2, ptrY + cellH + 30
-            );
-
-            // Pointer box
-            ctx.fillStyle = '#7B2FBE';
-            ctx.fillRect(ptrX, ptrY, cellW, cellH);
-            ctx.strokeStyle = '#E6EDF3';
-            ctx.lineWidth   = 2;
-            ctx.strokeRect(ptrX, ptrY, cellW, cellH);
-
-            // Address value
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font      = '10px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(
-                `0x${(0x20000000 + p.targetIdx * 4).toString(16).toUpperCase()}`,
-                ptrX + cellW / 2, ptrY + cellH / 2 + 4
-            );
-
-            // Pointer name
-            ctx.fillStyle = '#CBA6F7';
-            ctx.font      = '11px "JetBrains Mono", monospace';
-            ctx.fillText(p.name, ptrX + cellW / 2, ptrY + cellH + 18);
-
-            // Arrow from pointer to target
-            ctx.beginPath();
-            ctx.strokeStyle = '#FF6B35';
-            ctx.lineWidth   = 2;
-            const fromX = ptrX + cellW / 2;
-            const fromY = ptrY;
-            const toX   = startX + p.targetIdx * (cellW + 20) + cellW / 2;
-            const toY   = startY + cellH;
-            ctx.moveTo(fromX, fromY);
-            ctx.quadraticCurveTo(fromX, fromY - 30, toX, toY + 5);
-            ctx.stroke();
-
-            // Arrowhead
-            ctx.fillStyle = '#FF6B35';
-            ctx.beginPath();
-            ctx.moveTo(toX,     toY + 5);
-            ctx.lineTo(toX - 5, toY + 15);
-            ctx.lineTo(toX + 5, toY + 15);
-            ctx.fill();
-        });
-
-        ctx.textAlign = 'left';
+    function fit(text, maxW) {
+        text = String(text);
+        if (ctx.measureText(text).width <= maxW) return text;
+        while (text.length > 1 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+        return text + '…';
     }
 
-    document.getElementById('ptr-create-var')?.addEventListener('click', () => {
-        if (variables.length < 5) {
-            variables.push({
-                name:      varNames[variables.length],
-                value:     Math.floor(Math.random() * 255),
-                highlight: false,
-            });
-            draw();
+    const yMid = {};
+    let y = top;
+    prevRegion = null;
+    rows.forEach((r) => {
+        if (r.region !== prevRegion) {
+            prevRegion = r.region;
+            ctx.fillStyle = '#9AA4B2';
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(fit(r.region.toUpperCase(), W - 20), 10, y + 16);
+            ctx.strokeStyle = 'rgba(154,164,178,0.25)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(10, y + 21);
+            ctx.lineTo(W - 10, y + 21);
+            ctx.stroke();
+            y += regionH;
         }
-    });
 
-    document.getElementById('ptr-create-ptr')?.addEventListener('click', () => {
-        if (variables.length > 0 && pointers.length < 3) {
-            pointers.push({
-                name:      ptrNames[pointers.length],
-                targetIdx: variables.length - 1,
-            });
-            draw();
-        }
-    });
+        const style = PTR_KIND_STYLE[r.kind] || PTR_KIND_STYLE.var;
+        const bx = boxX;
+        const by = y + 4;
+        const bh = rowH - 8;
+        yMid[r.id] = by + bh / 2;
 
-    document.getElementById('ptr-deref')?.addEventListener('click', () => {
-        if (pointers.length > 0) {
-            const ptr = pointers[pointers.length - 1];
-            if (variables[ptr.targetIdx]) {
-                variables[ptr.targetIdx].value     = Math.floor(Math.random() * 255);
-                variables[ptr.targetIdx].highlight = true;
-                draw();
-                setTimeout(() => {
-                    if (variables[ptr.targetIdx]) {
-                        variables[ptr.targetIdx].highlight = false;
-                    }
-                    draw();
-                }, 800);
+        ctx.fillStyle = '#8B949E';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(r.addr, bx - 8, by + bh / 2 + 4);
+
+        ctx.fillStyle = style.fill;
+        ctx.fillRect(bx, by, boxW, bh);
+        if (style.hatch) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(bx, by, boxW, bh);
+            ctx.clip();
+            ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+            ctx.lineWidth = 6;
+            for (let hx = bx - bh; hx < bx + boxW; hx += 16) {
+                ctx.beginPath();
+                ctx.moveTo(hx, by + bh);
+                ctx.lineTo(hx + bh, by);
+                ctx.stroke();
             }
+            ctx.restore();
+        }
+        if (r.hl) {
+            ctx.strokeStyle = '#FF6B35';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(bx - 1, by - 1, boxW + 2, bh + 2);
+        } else {
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx + 0.5, by + 0.5, boxW - 1, bh - 1);
+        }
+
+        ctx.font = 'bold 13px "JetBrains Mono", monospace';
+        const valueText = fit(r.value, boxW * 0.55);
+        const valueW = ctx.measureText(valueText).width;
+        ctx.fillStyle = style.text;
+        ctx.textAlign = 'right';
+        ctx.fillText(valueText, bx + boxW - 10, by + bh / 2 + 5);
+
+        const nameMax = boxW - valueW - 30;
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 12px "JetBrains Mono", monospace';
+        if (r.note) {
+            ctx.fillText(fit(r.name, nameMax), bx + 10, by + 15);
+            ctx.font = '10px "JetBrains Mono", monospace';
+            ctx.globalAlpha = 0.8;
+            ctx.fillText(fit(r.note, nameMax), bx + 10, by + 29);
+            ctx.globalAlpha = 1;
+        } else {
+            ctx.fillText(fit(r.name, nameMax), bx + 10, by + bh / 2 + 4);
+        }
+
+        y += rowH;
+    });
+
+    const edgeX = boxX + boxW;
+    arrows.forEach((ar, i) => {
+        const fy = yMid[ar.from];
+        const ty = yMid[ar.to];
+        if (fy === undefined || ty === undefined) return;
+        const color = PTR_ARROW_COLOR[ar.kind] || PTR_ARROW_COLOR.ok;
+        const lane = edgeX + 14 + i * 16;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash(ar.kind === 'bad' ? [6, 4] : (ar.kind === 'warn' ? [3, 3] : []));
+        ctx.beginPath();
+        ctx.moveTo(edgeX + 2, fy);
+        ctx.lineTo(lane, fy);
+        ctx.lineTo(lane, ty);
+        ctx.lineTo(edgeX + 9, ty);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(edgeX + 3, fy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(edgeX + 2, ty);
+        ctx.lineTo(edgeX + 11, ty - 5);
+        ctx.lineTo(edgeX + 11, ty + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        if (ar.label) {
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'left';
+            const lx = lane + 6;
+            const ly = (fy + ty) / 2 + 4;
+            const label = fit(ar.label, Math.max(30, W - lx - 6));
+            const tw = ctx.measureText(label).width;
+            ctx.fillStyle = isDark ? '#0D1117' : '#1E1E2E';
+            ctx.fillRect(lx - 3, ly - 11, tw + 6, 15);
+            ctx.fillStyle = color;
+            ctx.fillText(label, lx, ly);
         }
     });
+    ctx.textAlign = 'left';
+}
 
-    document.getElementById('ptr-reset')?.addEventListener('click', () => {
-        variables = [];
-        pointers  = [];
-        draw();
+function initPointerViz() {
+    const root = document.getElementById('ptr-explorer');
+    if (!root) return;
+
+    const canvas    = document.getElementById('ptr-mem-canvas');
+    const picker    = document.getElementById('ptr-scenarios');
+    const titleEl   = document.getElementById('ptr-title');
+    const badgeEl   = document.getElementById('ptr-badge');
+    const summaryEl = document.getElementById('ptr-summary');
+    const codeEl    = document.getElementById('ptr-code');
+    const explainEl = document.getElementById('ptr-explain');
+    const counterEl = document.getElementById('ptr-counter');
+    const progressEl = document.getElementById('ptr-progress');
+    const prevBtn   = document.getElementById('ptr-prev');
+    const nextBtn   = document.getElementById('ptr-next');
+    const restartBtn = document.getElementById('ptr-restart');
+
+    const scenarios = buildPointerScenarios();
+    const BADGE = {
+        valid:  { text: 'Basics',          cls: 'valid' },
+        danger: { text: 'Dangerous state', cls: 'danger' },
+        info:   { text: 'Type / qualifier', cls: 'info' },
+    };
+
+    let si = 0;
+    let stepIdx = 0;
+
+    const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+    };
+
+    // Scenario picker, grouped
+    const chips = [];
+    [...new Set(scenarios.map((s) => s.group))].forEach((group) => {
+        const row = el('div', 'ptr-group');
+        row.appendChild(el('span', 'ptr-group-label', group));
+        scenarios.forEach((s, i) => {
+            if (s.group !== group) return;
+            const b = el('button', 'ptr-chip', s.title);
+            b.type = 'button';
+            b.dataset.state = s.state;
+            b.addEventListener('click', () => select(i));
+            chips[i] = b;
+            row.appendChild(b);
+        });
+        picker.appendChild(row);
     });
 
-    vizRedrawers['pointers'] = draw;
-    draw();
+    function renderCode(s, step) {
+        const active = new Set([].concat(step.line));
+        codeEl.textContent = '';
+        s.code.forEach((line, i) => {
+            const row = el('div', 'ptr-code-line' + (active.has(i) ? ' active' : ''));
+            row.dataset.n = String(i + 1);
+            const ci = line.indexOf('//');
+            if (ci >= 0) {
+                row.appendChild(el('span', '', line.slice(0, ci)));
+                row.appendChild(el('span', 'cmt', line.slice(ci)));
+            } else {
+                row.appendChild(el('span', '', line || ' '));
+            }
+            codeEl.appendChild(row);
+        });
+    }
+
+    function block(label, text) {
+        const b = el('div', 'proto-explain-block');
+        b.appendChild(el('span', 'proto-explain-label', label));
+        b.appendChild(el('p', '', text));
+        return b;
+    }
+
+    function renderExplain(step) {
+        const st = PTR_STATUS[step.status] || PTR_STATUS.info;
+        explainEl.textContent = '';
+        const head = el('div', 'ptr-explain-head');
+        head.appendChild(el('span', `ptr-status ptr-status--${st.cls}`, step.statusLabel || st.label));
+        explainEl.appendChild(head);
+        explainEl.appendChild(block('What happens', step.what));
+        explainEl.appendChild(block('Why it matters', step.why));
+        explainEl.appendChild(block('Dereference', step.deref));
+        if (step.tip) explainEl.appendChild(block('Tip', step.tip));
+    }
+
+    function render() {
+        const s = scenarios[si];
+        const step = s.steps[stepIdx];
+        chips.forEach((b, i) => b && b.classList.toggle('active', i === si));
+        titleEl.textContent = s.title;
+        const badge = BADGE[s.state] || BADGE.info;
+        badgeEl.textContent = badge.text;
+        badgeEl.className = `ptr-badge ptr-badge--${badge.cls}`;
+        summaryEl.textContent = s.summary;
+        counterEl.textContent = `Step ${stepIdx + 1} / ${s.steps.length}`;
+        const pct = s.steps.length > 1 ? (stepIdx / (s.steps.length - 1)) * 100 : 100;
+        if (progressEl) progressEl.style.width = pct + '%';
+        prevBtn.disabled = stepIdx === 0;
+        nextBtn.textContent = stepIdx === s.steps.length - 1 ? 'Next scenario →' : 'Next Step →';
+        renderCode(s, step);
+        renderExplain(step);
+        drawPointerMemory(canvas, step);
+    }
+
+    function select(i) {
+        si = (i + scenarios.length) % scenarios.length;
+        stepIdx = 0;
+        render();
+    }
+
+    function next() {
+        const s = scenarios[si];
+        if (stepIdx < s.steps.length - 1) { stepIdx++; render(); }
+        else select(si + 1);
+    }
+
+    function prev() {
+        if (stepIdx > 0) { stepIdx--; render(); }
+    }
+
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
+    restartBtn.addEventListener('click', () => { stepIdx = 0; render(); });
+
+    root.addEventListener('keydown', (e) => {
+        if (e.target.closest('input, select, textarea')) return;
+        if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); prev(); }
+    });
+
+    vizRedrawers['pointers'] = () => drawPointerMemory(canvas, scenarios[si].steps[stepIdx]);
+    render();
 }
 
 // ---------------------------------------------------------------------------
